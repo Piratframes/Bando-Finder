@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bando Finder</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #1c1c1e;
+      color: #e5e5ea;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: #2c2c2e;
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      border-bottom: 1px solid #3a3a3c;
+    }
+
+    .logo {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #f5a623;
+    }
+    
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+    
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .control-group label {
+      font-size: 0.85rem;
+      color: #98989d;
+    }
+
+    input, select, button {
+      padding: 8px 12px;
+      border: 1px solid #3a3a3c;
+      border-radius: 8px;
+      background: #1c1c1e;
+      color: #e5e5ea;
+      font-size: 0.9rem;
+      font-family: inherit;
+    }
+
+    button {
+      background: #f5a623;
+      color: #1c1c1e;
+      border: none;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.2s, transform 0.1s;
+    }
+
+    button:hover {
+      background: #f7b84e;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    button:disabled {
+      background: #3a3a3c;
+      color: #636366;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: #3a3a3c;
+      color: #e5e5ea;
+    }
+
+    .btn-secondary:hover {
+      background: #48484a;
+    }
+    
+    #username {
+      width: 120px;
+    }
+    
+    #radius {
+      width: 80px;
+    }
+    
+    /* Main content */
+    main {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+    }
+    
+    /* Map */
+    #map {
+      flex: 1;
+      min-width: 0;
+    }
+    
+    /* Sidebar */
+    #sidebar {
+      width: 500px;
+      background: #2c2c2e;
+      display: flex;
+      flex-direction: column;
+      border-left: 1px solid #3a3a3c;
+    }
+
+    .sidebar-header {
+      padding: 12px 15px;
+      background: #1c1c1e;
+      border-bottom: 1px solid #3a3a3c;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sidebar-header h2 {
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .result-count {
+      font-size: 0.85rem;
+      color: #98989d;
+    }
+    
+    #results {
+      flex: 1;
+      overflow-y: auto;
+    }
+    
+    .result-item {
+      padding: 12px 15px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .result-item:hover {
+      background: rgba(255,255,255,0.05);
+    }
+
+    .result-item.selected {
+      background: rgba(245, 166, 35, 0.1);
+      border-left: 4px solid #f5a623;
+    }
+    
+    .result-actions {
+      display: flex;
+      gap: 6px;
+      margin-left: auto;
+    }
+    
+    .btn-maps {
+      background: #3a3a3c;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: #e5e5ea;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .btn-maps:hover {
+      background: #48484a;
+    }
+    
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    
+    .badge {
+      font-size: 1rem;
+    }
+    
+    .result-name {
+      font-weight: 500;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    .result-distance {
+      font-size: 0.8rem;
+      color: #f5a623;
+      white-space: nowrap;
+    }
+
+    .result-meta {
+      font-size: 0.8rem;
+      color: #8e8e93;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .result-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    
+    .status-a_visiter { background: #3b82f6; color: white; }
+    .status-teste { background: #6b7280; color: white; }
+    .status-bando { background: #10b981; color: white; }
+    .status-urbex { background: #8b5cf6; color: white; }
+    .status-mort { background: #dc2626; color: white; }
+
+    .last-user {
+      font-size: 0.8rem;
+      color: #98989d;
+    }
+    .last-user strong {
+      color: #f5a623;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: #2c2c2e;
+      color: #f5a623;
+      padding: 10px 24px;
+      border-radius: 10px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 9999;
+      pointer-events: none;
+      border: 1px solid #3a3a3c;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .toast.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .danger-alert {
+      background: rgba(220, 38, 38, 0.12);
+      border: 1px solid rgba(220, 38, 38, 0.4);
+      border-radius: 10px;
+      padding: 12px;
+      margin-bottom: 15px;
+    }
+    .danger-alert h4 {
+      color: #dc2626;
+      font-size: 0.85rem;
+      margin-bottom: 6px;
+    }
+    .danger-alert .danger-item {
+      font-size: 0.8rem;
+      color: #fca5a5;
+      margin-bottom: 3px;
+    }
+    
+    /* Score badges */
+    .score-high { color: #ff6b6b; }
+    .score-medium { color: #f5a623; }
+    .score-low { color: #8e8e93; }
+    
+    /* Detail panel */
+    #detail-panel {
+      display: none;
+      position: absolute;
+      top: 60px;
+      right: 520px;
+      width: 420px;
+      max-height: calc(100vh - 80px);
+      background: #2c2c2e;
+      border-radius: 12px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+      z-index: 1000;
+      overflow: hidden;
+      border: 1px solid #3a3a3c;
+    }
+    
+    #detail-panel.visible {
+      display: block;
+    }
+    
+    .detail-header {
+      padding: 15px;
+      background: #1c1c1e;
+      border-bottom: 1px solid #3a3a3c;
+    }
+
+    .detail-header h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 5px;
+    }
+
+    .detail-header .location {
+      font-size: 0.85rem;
+      color: #8e8e93;
+    }
+
+    .detail-close {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      background: none;
+      border: none;
+      color: #8e8e93;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 5px;
+    }
+
+    .detail-close:hover {
+      color: #fff;
+      background: none;
+    }
+    
+    .detail-content {
+      padding: 15px;
+      overflow-y: auto;
+      max-height: calc(100vh - 250px);
+    }
+    
+    .detail-section {
+      margin-bottom: 15px;
+    }
+    
+    .detail-section h4 {
+      font-size: 0.75rem;
+      color: #f5a623;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+    
+    .detail-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+    
+    .detail-item {
+      font-size: 0.85rem;
+    }
+    
+    .detail-item .label {
+      color: #8e8e93;
+      display: block;
+      font-size: 0.75rem;
+    }
+
+    .detail-item .value {
+      color: #e5e5ea;
+    }
+    
+    .detail-actions {
+      padding: 15px;
+      background: #1c1c1e;
+      border-top: 1px solid #3a3a3c;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    
+    .status-buttons {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .status-buttons button {
+      flex: 1;
+      font-size: 0.8rem;
+      padding: 8px;
+      color: #fff;
+    }
+
+    .btn-a_visiter { background: #3b82f6; }
+    .btn-a_visiter:hover { background: #60a5fa; }
+    .btn-a_visiter.active { box-shadow: 0 0 0 2px #f5a623; }
+
+    .btn-teste { background: #6b7280; }
+    .btn-teste:hover { background: #9ca3af; }
+    .btn-teste.active { box-shadow: 0 0 0 2px #f5a623; }
+
+    .btn-bando { background: #10b981; }
+    .btn-bando:hover { background: #34d399; }
+    .btn-bando.active { box-shadow: 0 0 0 2px #f5a623; }
+
+    .btn-urbex { background: #8b5cf6; }
+    .btn-urbex:hover { background: #a78bfa; }
+    .btn-urbex.active { box-shadow: 0 0 0 2px #f5a623; }
+
+    .btn-mort { background: #dc2626; }
+    .btn-mort:hover { background: #ef4444; }
+    .btn-mort.active { box-shadow: 0 0 0 2px #f5a623; }
+    
+    .btn-clear { background: #3a3a3c; color: #e5e5ea; }
+    
+    .external-links {
+      display: flex;
+      gap: 8px;
+    }
+    
+    .external-links a {
+      flex: 1;
+      text-align: center;
+      padding: 8px;
+      background: transparent;
+      color: #e5e5ea;
+      text-decoration: none;
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 500;
+      border: 1px solid rgba(255,255,255,0.25);
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .external-links a:hover {
+      background: #fff;
+      color: #1c1c1e;
+    }
+    
+    .comment-section {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    
+    .comment-section textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #3a3a3c;
+      border-radius: 8px;
+      background: #1c1c1e;
+      color: #e5e5ea;
+      font-size: 0.85rem;
+      resize: vertical;
+      font-family: inherit;
+    }
+    
+    .comment-section button {
+      align-self: flex-end;
+    }
+    
+    /* Filters panel */
+    .filters-toggle {
+      font-size: 0.85rem;
+      padding: 6px 12px;
+    }
+    
+    #filters-panel {
+      display: none;
+      padding: 15px;
+      background: #1c1c1e;
+      border-bottom: 1px solid #3a3a3c;
+    }
+    
+    #filters-panel.visible {
+      display: block;
+    }
+    
+    .filters-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 12px;
+    }
+    
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .filter-group label {
+      font-size: 0.75rem;
+      color: #8e8e93;
+    }
+    
+    .filter-group select,
+    .filter-group input {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 0.85rem;
+    }
+    
+    /* Loading */
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(28, 28, 30, 0.97);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    #loading.hidden {
+      display: none;
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #3a3a3c;
+      border-top-color: #f5a623;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    #loading p {
+      margin-top: 15px;
+      color: #8e8e93;
+    }
+    
+    /* Leaflet customization */
+    .leaflet-popup-content-wrapper {
+      background: #2c2c2e;
+      color: #e5e5ea;
+      border-radius: 10px;
+    }
+
+    .leaflet-popup-tip {
+      background: #2c2c2e;
+    }
+    
+    .marker-pepite {
+      filter: hue-rotate(0deg);
+    }
+    
+    .marker-moyen {
+      filter: hue-rotate(40deg);
+    }
+    
+    .marker-bof {
+      filter: hue-rotate(180deg) saturate(0.3);
+    }
+
+    /* Focus states */
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: #f5a623;
+      box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.2);
+    }
+
+    /* Scrollbar styling */
+    #results::-webkit-scrollbar,
+    .detail-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    #results::-webkit-scrollbar-track,
+    .detail-content::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    #results::-webkit-scrollbar-thumb,
+    .detail-content::-webkit-scrollbar-thumb {
+      background: #3a3a3c;
+      border-radius: 3px;
+    }
+    #results::-webkit-scrollbar-thumb:hover,
+    .detail-content::-webkit-scrollbar-thumb:hover {
+      background: #48484a;
+    }
+
+    /* Zone PLU tags */
+    .zone-tag {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .zone-u { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+    .zone-a { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+    .zone-n { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+    .zone-au { background: rgba(245, 166, 35, 0.2); color: #f5a623; }
+
+    .result-zone {
+      font-size: 0.7rem;
+      padding: 1px 5px;
+      border-radius: 6px;
+      font-weight: 600;
+    }
+    .result-zone.zone-u { background: rgba(239, 68, 68, 0.2); color: #fca5a5; }
+    .result-zone.zone-a, .result-zone.zone-n { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
+    .result-zone.zone-au { background: rgba(245, 166, 35, 0.2); color: #f5a623; }
+
+    /* Selection */
+    ::selection {
+      background: rgba(245, 166, 35, 0.3);
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading">
+    <div class="spinner"></div>
+    <p>Chargement des données...</p>
+  </div>
+
+  <header>
+    <div class="logo">🏚️ Bando Finder</div>
+    <div class="controls">
+      <div class="control-group">
+        <label>Pseudo</label>
+        <input type="text" id="username" placeholder="Ton pseudo" />
+      </div>
+      <div class="control-group">
+        <input type="text" id="city-input" placeholder="Ville..." style="width:140px" />
+        <button id="city-btn">🔍</button>
+      </div>
+      <div class="control-group">
+        <button id="geolocate-btn">📍 Me localiser</button>
+      </div>
+      <div class="control-group">
+        <label>Distance</label>
+        <input type="number" id="dist-min" value="0" min="0" max="500" style="width:60px" /> à
+        <input type="number" id="dist-max" value="50" min="0" max="500" style="width:60px" /> km
+      </div>
+      <div class="control-group">
+        <button id="search-btn">Rechercher</button>
+      </div>
+      <div class="control-group">
+        <label>
+          <input type="checkbox" id="pepites-only" /> Pépites seulement
+        </label>
+      </div>
+      <div class="control-group">
+        <select id="filter-status">
+          <option value="">Tous les statuts</option>
+          <option value="a_visiter">🔵 À visiter</option>
+          <option value="teste">⚫ Testés</option>
+          <option value="bando">🟢 Bandos</option>
+          <option value="urbex">🟣 Urbex</option>
+          <option value="mort">💀 Morts</option>
+          <option value="any">📌 Avec un statut</option>
+          <option value="none">⭕ Sans statut</option>
+        </select>
+      </div>
+      <button class="btn-secondary filters-toggle" id="filters-toggle">⚙️ Plus de filtres</button>
+    </div>
+  </header>
+
+  <div id="filters-panel">
+    <div class="filters-grid">
+      <div class="filter-group">
+        <label>Type de friche</label>
+        <select id="filter-type">
+          <option value="">Tous</option>
+          <option value="friche industrielle">Industrielle</option>
+          <option value="friche commerciale">Commerciale</option>
+          <option value="friche ferroviaire">Ferroviaire</option>
+          <option value="friche militaire">Militaire</option>
+          <option value="friche hospitalière">Hospitalière</option>
+          <option value="friche d'habitat">Habitat</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Surface terrain</label>
+        <select id="filter-surface">
+          <option value="">Toutes</option>
+          <option value="0-1000">< 1 000 m²</option>
+          <option value="1000-5000">1 000 - 5 000 m²</option>
+          <option value="5000-10000">5 000 - 10 000 m²</option>
+          <option value="10000-50000">10 000 - 50 000 m²</option>
+          <option value="50000-">> 50 000 m²</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Surface bâtie</label>
+        <select id="filter-bati">
+          <option value="">Toutes</option>
+          <option value="0-500">< 500 m²</option>
+          <option value="500-1000">500 - 1 000 m²</option>
+          <option value="1000-2000">1 000 - 2 000 m²</option>
+          <option value="2000-5000">2 000 - 5 000 m²</option>
+          <option value="5000-">> 5 000 m²</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Nb bâtiments min</label>
+        <input type="number" id="filter-nb-bati" value="" placeholder="Ex: 2" />
+      </div>
+      <div class="filter-group">
+        <label>Statut friche</label>
+        <select id="filter-statut-friche">
+          <option value="">Tous</option>
+          <option value="friche sans projet">Sans projet</option>
+          <option value="friche potentielle">Potentielle</option>
+          <option value="friche avec projet">Avec projet</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Zone d'activités</label>
+        <select id="filter-zone">
+          <option value="">Tous</option>
+          <option value="oui">Oui (isolé)</option>
+          <option value="non">Non</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Zone PLU</label>
+        <select id="filter-urba">
+          <option value="">Toutes</option>
+          <option value="U">Urbaine (en ville)</option>
+          <option value="AU">A urbaniser (périphérie)</option>
+          <option value="A">Agricole (campagne)</option>
+          <option value="N">Naturelle (isolé)</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <div id="map"></div>
+    <div id="sidebar">
+      <div class="sidebar-header">
+        <h2>Résultats</h2>
+        <span class="result-count" id="result-count">-</span>
+      </div>
+      <div id="results"></div>
+    </div>
+  </main>
+
+  <div id="detail-panel">
+    <button class="detail-close" onclick="closeDetail()">&times;</button>
+    <div class="detail-header">
+      <h3 id="detail-name">-</h3>
+      <div class="location" id="detail-location">-</div>
+    </div>
+    <div class="detail-content">
+      <div class="external-links" id="detail-links" style="margin-bottom:15px">
+        <a id="link-maps" href="#" target="_blank">Google Maps</a>
+        <a id="link-street" href="#" target="_blank">Street View</a>
+        <a id="link-fiche" href="#" target="_blank">Cartofriches</a>
+      </div>
+      <div class="detail-section">
+        <h4>Caractéristiques</h4>
+        <div class="detail-grid" id="detail-chars"></div>
+      </div>
+      <div class="detail-section">
+        <h4>Bâtiments</h4>
+        <div class="detail-grid" id="detail-bati"></div>
+      </div>
+      <div id="detail-danger" style="display:none"></div>
+      <div class="detail-section">
+        <h4>Statut communautaire</h4>
+        <div id="detail-status-info" style="display:flex; align-items:center; gap:10px; font-size:0.9rem;"></div>
+      </div>
+    </div>
+    <div class="detail-actions">
+      <div class="status-buttons">
+        <button class="btn-a_visiter" onclick="setStatus('a_visiter')">À visiter</button>
+        <button class="btn-teste" onclick="setStatus('teste')">Testé</button>
+        <button class="btn-bando" onclick="setStatus('bando')">Bando!</button>
+        <button class="btn-urbex" onclick="setStatus('urbex')">Urbex</button>
+        <button class="btn-mort" onclick="setStatus('mort')">Mort</button>
+        <button class="btn-clear" onclick="setStatus(null)">✕</button>
+      </div>
+      <div class="comment-section">
+        <textarea id="detail-comment" placeholder="Ajouter un commentaire..." rows="2"></textarea>
+        <button onclick="saveComment()" class="btn-secondary">💾 Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/sql-wasm.js"></script>
+  <script>
+    // Configuration Supabase
+    const SUPABASE_URL = 'https://jrontpgwneagnlvvxzsz.supabase.co';
+    const SUPABASE_KEY = 'sb_publishable_ib2IbfWs4rX9tag5FrwjRw_wh32xfMf';
+
+    // État global
+    let db = null;
+    let map = null;
+    let markers = [];
+    let allFriches = [];
+    let filteredFriches = [];
+    let allStatuts = {}; // { site_id: { statut, last_user, commentaire } }
+    let selectedFriche = null;
+    let userPosition = null;
+
+    // Traduction zone PLU
+    function getZoneLabel(code) {
+      if (!code || code === '99') return 'Inconnu';
+      const c = code.toUpperCase();
+      if (c === 'U') return 'Urbaine';
+      if (c.startsWith('AU')) return 'A urbaniser';
+      if (c === 'A' || c === 'AH') return 'Agricole';
+      if (c === 'N' || c === 'NH') return 'Naturelle';
+      if (c.startsWith('ZC') || c.startsWith('ZN')) return 'Zone constructible (ancien POS)';
+      return code;
+    }
+
+    function getZoneClass(code) {
+      if (!code || code === '99') return '';
+      const c = code.toUpperCase();
+      if (c === 'U') return 'u';
+      if (c.startsWith('AU')) return 'au';
+      if (c === 'A' || c === 'AH') return 'a';
+      if (c === 'N' || c === 'NH') return 'n';
+      return '';
+    }
+
+    // Initialisation
+    async function init() {
+      try {
+        // Charger le pseudo sauvegardé
+        const savedUsername = localStorage.getItem('bando_username');
+        if (savedUsername) {
+          document.getElementById('username').value = savedUsername;
+        }
+
+        // Initialiser la carte
+        initMap();
+
+        // Charger la base SQLite
+        await loadDatabase();
+
+        // Charger les statuts depuis Supabase
+        await loadStatuts();
+
+        // Event listeners
+        setupEventListeners();
+
+        // Masquer le loading
+        document.getElementById('loading').classList.add('hidden');
+
+      } catch (error) {
+        console.error('Erreur initialisation:', error);
+        alert('Erreur lors du chargement: ' + error.message);
+      }
+    }
+
+    function initMap() {
+      map = L.map('map').setView([46.603354, 1.888334], 6);
+      
+      const osm = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap'
+      });
+      
+      const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+        maxZoom: 19,
+        attribution: '© Esri'
+      });
+      
+      osm.addTo(map);
+      L.control.layers({'Carte': osm, 'Satellite': satellite}).addTo(map);
+    }
+
+    async function loadDatabase() {
+      const SQL = await initSqlJs({
+        locateFile: file => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.8.0/${file}`
+      });
+
+      const response = await fetch('bando.db');
+      const buffer = await response.arrayBuffer();
+      db = new SQL.Database(new Uint8Array(buffer));
+
+      // Charger toutes les friches en mémoire
+      const result = db.exec('SELECT * FROM friches');
+      if (result.length > 0) {
+        const columns = result[0].columns;
+        allFriches = result[0].values.map(row => {
+          const obj = {};
+          columns.forEach((col, i) => obj[col] = row[i]);
+          return obj;
+        });
+      }
+      console.log(`${allFriches.length} friches chargées`);
+    }
+
+    async function loadStatuts() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/statuts?select=*`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+        const data = await response.json();
+
+        // 1 seule ligne par site_id : { statut, last_user, commentaire }
+        allStatuts = {};
+        data.forEach(s => {
+          allStatuts[s.site_id] = {
+            statut: s.statut,
+            last_user: s.last_user || s.username || '?',
+            commentaire: s.commentaire || ''
+          };
+        });
+
+        console.log(`${data.length} statuts chargés`);
+      } catch (error) {
+        console.error('Erreur chargement statuts:', error);
+      }
+    }
+
+    function setupEventListeners() {
+      document.getElementById('geolocate-btn').addEventListener('click', geolocate);
+      document.getElementById('city-btn').addEventListener('click', searchByCity);
+      document.getElementById('city-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') searchByCity();
+      });
+      document.getElementById('search-btn').addEventListener('click', search);
+      document.getElementById('pepites-only').addEventListener('change', applyFiltersAndDisplay);
+      document.getElementById('filter-status').addEventListener('change', applyFiltersAndDisplay);
+      document.getElementById('filters-toggle').addEventListener('click', toggleFilters);
+      
+      // Filtres avancés
+      ['filter-type', 'filter-surface', 'filter-bati', 'filter-nb-bati', 'filter-statut-friche', 'filter-zone', 'filter-urba'].forEach(id => {
+        document.getElementById(id).addEventListener('change', applyFiltersAndDisplay);
+      });
+
+      // Sauvegarde pseudo
+      document.getElementById('username').addEventListener('change', (e) => {
+        localStorage.setItem('bando_username', e.target.value);
+      });
+    }
+
+    function toggleFilters() {
+      document.getElementById('filters-panel').classList.toggle('visible');
+    }
+
+    async function geolocate() {
+      const btn = document.getElementById('geolocate-btn');
+      btn.disabled = true;
+      btn.textContent = '⏳ Localisation...';
+
+      try {
+        const pos = await new Promise((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            enableHighAccuracy: true,
+            timeout: 10000
+          });
+        });
+
+        userPosition = {
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude
+        };
+
+        map.setView([userPosition.lat, userPosition.lng], 10);
+        
+        // Marqueur position
+        L.marker([userPosition.lat, userPosition.lng], {
+          icon: L.divIcon({
+            className: 'user-marker',
+            html: '📍',
+            iconSize: [30, 30],
+            iconAnchor: [15, 30]
+          })
+        }).addTo(map);
+
+        btn.textContent = '✓ Localisé';
+        
+        // Lancer la recherche automatiquement
+        search();
+
+      } catch (error) {
+        alert('Impossible de vous localiser: ' + error.message);
+        btn.textContent = '📍 Me localiser';
+      }
+      btn.disabled = false;
+    }
+
+    async function searchByCity() {
+      const input = document.getElementById('city-input');
+      const cityName = input.value.trim();
+      
+      if (!cityName) {
+        alert('Entre un nom de ville');
+        return;
+      }
+
+      const btn = document.getElementById('city-btn');
+      btn.disabled = true;
+      btn.textContent = '⏳';
+
+      try {
+        // Géocodage via Nominatim (OpenStreetMap)
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityName)}&countrycodes=fr&limit=1`,
+          { headers: { 'User-Agent': 'BandoFinder/1.0' } }
+        );
+        const data = await response.json();
+
+        if (data.length === 0) {
+          alert(`Ville "${cityName}" non trouvée`);
+          btn.textContent = '🔍';
+          btn.disabled = false;
+          return;
+        }
+
+        const result = data[0];
+        userPosition = {
+          lat: parseFloat(result.lat),
+          lng: parseFloat(result.lon)
+        };
+
+        // Centrer la carte
+        map.setView([userPosition.lat, userPosition.lng], 10);
+
+        // Marqueur position
+        L.marker([userPosition.lat, userPosition.lng], {
+          icon: L.divIcon({
+            className: 'city-marker',
+            html: '📍',
+            iconSize: [30, 30],
+            iconAnchor: [15, 30]
+          })
+        }).addTo(map);
+
+        // Mettre à jour l'input avec le nom officiel
+        input.value = result.display_name.split(',')[0];
+        
+        btn.textContent = '✓';
+        
+        // Lancer la recherche automatiquement
+        search();
+
+      } catch (error) {
+        console.error('Erreur géocodage:', error);
+        alert('Erreur lors de la recherche de la ville');
+        btn.textContent = '🔍';
+      }
+      btn.disabled = false;
+    }
+
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                Math.sin(dLon/2) * Math.sin(dLon/2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      return R * c;
+    }
+
+    function calculateScore(friche) {
+      let score = 0;
+
+      // Emprise bâtie (0-25 points)
+      const emprise = friche.emprise_sol_bati || 0;
+      if (emprise > 5000) score += 25;
+      else if (emprise > 2000) score += 20;
+      else if (emprise > 1000) score += 15;
+      else if (emprise > 500) score += 10;
+      else if (emprise > 0) score += 5;
+
+      // Nombre de bâtiments (0-15 points)
+      const nbBati = friche.bati_nombre || 0;
+      if (nbBati >= 5) score += 15;
+      else if (nbBati >= 3) score += 10;
+      else if (nbBati >= 2) score += 7;
+      else if (nbBati >= 1) score += 3;
+
+      // Type de friche (0-20 points)
+      const type = (friche.site_type || '').toLowerCase();
+      if (type.includes('industriel')) score += 20;
+      else if (type.includes('ferroviaire')) score += 18;
+      else if (type.includes('militaire')) score += 18;
+      else if (type.includes('hospitalier')) score += 15;
+      else if (type.includes('commercial')) score += 10;
+      else if (type.includes('logistique')) score += 12;
+
+      // Activité historique (0-10 points)
+      const activite = (friche.activite_libelle || '').toLowerCase();
+      if (activite.includes('fonderie') || activite.includes('ciment') || 
+          activite.includes('métallur') || activite.includes('sidérur') ||
+          activite.includes('aciérie')) score += 10;
+      else if (activite.includes('usine') || activite.includes('fabric')) score += 7;
+      else if (activite.includes('entrepôt')) score += 5;
+
+      // État dégradation (0-10 points)
+      const etat = (friche.bati_etat || '').toLowerCase();
+      if (etat.includes('très important')) score += 10;
+      else if (etat.includes('moyenne')) score += 6;
+      else if (etat.includes('faible')) score += 2;
+
+      // Zone d'activités (0-10 points) - isolement probable
+      if (friche.zone_activites === 'oui') score += 10;
+
+      // Statut sans projet (0-10 points)
+      const statut = (friche.site_statut || '').toLowerCase();
+      if (statut.includes('sans projet')) score += 10;
+      else if (statut.includes('potentielle')) score += 5;
+      else if (statut.includes('avec projet')) score -= 5;
+      else if (statut.includes('reconvertie')) score -= 20;
+
+      // Surface terrain (0-5 points)
+      const surface = friche.site_surface || 0;
+      if (surface > 20000) score += 5;
+      else if (surface > 10000) score += 3;
+
+      return Math.max(0, Math.min(100, score));
+    }
+
+    function search() {
+      if (!userPosition) {
+        alert('Clique sur "Me localiser" d\'abord');
+        return;
+      }
+
+      const distMin = parseInt(document.getElementById('dist-min').value) || 0;
+      const distMax = parseInt(document.getElementById('dist-max').value) || 50;
+
+      // Filtrer par distance et calculer score
+      filteredFriches = allFriches
+        .map(f => {
+          const dist = calculateDistance(userPosition.lat, userPosition.lng, f.lat, f.long);
+          return { ...f, distance: dist, score: calculateScore(f) };
+        })
+        .filter(f => f.distance >= distMin && f.distance <= distMax);
+
+      applyFiltersAndDisplay();
+    }
+
+    function applyFiltersAndDisplay() {
+      const username = document.getElementById('username').value;
+      const pepitesOnly = document.getElementById('pepites-only').checked;
+      const statusFilter = document.getElementById('filter-status').value;
+      const typeFilter = document.getElementById('filter-type').value;
+      const surfaceRange = document.getElementById('filter-surface').value;
+      const batiRange = document.getElementById('filter-bati').value;
+      const nbBatiMin = parseInt(document.getElementById('filter-nb-bati').value) || 0;
+      const statutFricheFilter = document.getElementById('filter-statut-friche').value;
+      const zoneFilter = document.getElementById('filter-zone').value;
+      const urbaFilter = document.getElementById('filter-urba').value;
+
+      let results = [...filteredFriches];
+
+      // Filtre pépites
+      if (pepitesOnly) {
+        results = results.filter(f => f.score >= 70);
+      }
+
+      // Filtre statut global
+      if (statusFilter) {
+        if (statusFilter === 'any') {
+          results = results.filter(f => allStatuts[f.site_id]?.statut);
+        } else if (statusFilter === 'none') {
+          results = results.filter(f => !allStatuts[f.site_id]?.statut);
+        } else {
+          results = results.filter(f => allStatuts[f.site_id]?.statut === statusFilter);
+        }
+      }
+
+      // Filtres avancés
+      if (typeFilter) {
+        results = results.filter(f => f.site_type === typeFilter);
+      }
+      if (surfaceRange) {
+        const [min, max] = surfaceRange.split('-').map(v => v ? parseInt(v) : null);
+        results = results.filter(f => {
+          const val = f.site_surface || 0;
+          if (min !== null && val < min) return false;
+          if (max !== null && val > max) return false;
+          return true;
+        });
+      }
+      if (batiRange) {
+        const [min, max] = batiRange.split('-').map(v => v ? parseInt(v) : null);
+        results = results.filter(f => {
+          const val = f.emprise_sol_bati || 0;
+          if (min !== null && val < min) return false;
+          if (max !== null && val > max) return false;
+          return true;
+        });
+      }
+      if (nbBatiMin) {
+        results = results.filter(f => (f.bati_nombre || 0) >= nbBatiMin);
+      }
+      if (statutFricheFilter) {
+        results = results.filter(f => f.site_statut === statutFricheFilter);
+      }
+      if (zoneFilter) {
+        results = results.filter(f => f.zone_activites === zoneFilter);
+      }
+      if (urbaFilter) {
+        results = results.filter(f => {
+          const z = (f.urba_zone_type || '').toUpperCase();
+          if (urbaFilter === 'AU') return z.startsWith('AU');
+          if (urbaFilter === 'A') return z === 'A' || z === 'AH';
+          if (urbaFilter === 'N') return z === 'N' || z === 'NH';
+          return z === urbaFilter;
+        });
+      }
+
+      // Trier par score décroissant
+      results.sort((a, b) => b.score - a.score);
+
+      displayResults(results);
+    }
+
+    function displayResults(results) {
+      const username = document.getElementById('username').value;
+      
+      // Nettoyer les marqueurs
+      markers.forEach(m => map.removeLayer(m));
+      markers = [];
+
+      // Mettre à jour le compteur
+      document.getElementById('result-count').textContent = `${results.length} trouvés`;
+
+      // Afficher la liste
+      const container = document.getElementById('results');
+      container.innerHTML = '';
+
+      results.forEach(friche => {
+        const siteData = allStatuts[friche.site_id];
+        const siteStatus = siteData?.statut || null;
+        const lastUser = siteData?.last_user || null;
+
+        // Créer l'élément liste
+        const item = document.createElement('div');
+        item.className = 'result-item';
+        item.dataset.siteId = friche.site_id;
+        item.onclick = (e) => {
+          if (!e.target.closest('.btn-maps')) {
+            selectFriche(friche, item);
+            showDetail(friche);
+          }
+        };
+
+        const scoreBadge = friche.score >= 70 ? '🔥' : friche.score >= 40 ? '🟠' : '⚪';
+
+        let statusBadge = '';
+        if (siteStatus) {
+          const statusEmoji = { a_visiter: '🔵', teste: '⚫', bando: '🟢', urbex: '🟣', mort: '💀' };
+          statusBadge = `<span class="result-status status-${siteStatus}">${statusEmoji[siteStatus]} ${siteStatus.replace('_', ' ')}</span>`;
+          if (lastUser) {
+            statusBadge += `<span class="last-user">par <strong>${lastUser}</strong></span>`;
+          }
+        }
+
+        const mapsUrl = `https://www.google.com/maps?q=${friche.lat},${friche.long}`;
+        const zClass = getZoneClass(friche.urba_zone_type);
+        const zLabel = getZoneLabel(friche.urba_zone_type);
+        const zoneBadge = zClass ? `<span class="result-zone zone-${zClass}">${zLabel}</span>` : '';
+
+        item.innerHTML = `
+          <div class="result-header">
+            <span class="badge">${scoreBadge}</span>
+            <span class="result-name">${friche.site_nom || 'Sans nom'}</span>
+            <span class="result-distance">${friche.distance.toFixed(1)} km</span>
+            <div class="result-actions">
+              <a href="${mapsUrl}" target="_blank" class="btn-maps" onclick="selectFriche(null, this.closest('.result-item'))">📍 Maps</a>
+            </div>
+          </div>
+          <div class="result-meta">
+            <span>${friche.site_type || 'Type inconnu'}</span>
+            <span>${friche.comm_nom || ''}</span>
+            ${zoneBadge}
+            ${statusBadge}
+          </div>
+        `;
+        container.appendChild(item);
+
+        // Créer le marqueur
+        const markerColor = friche.score >= 70 ? 'red' : friche.score >= 40 ? 'orange' : 'gray';
+        const markerSize = friche.score >= 70 ? 12 : friche.score >= 40 ? 10 : 8;
+        
+        let markerHtml = `<div style="
+          width: ${markerSize}px;
+          height: ${markerSize}px;
+          background: ${markerColor};
+          border: 2px solid white;
+          border-radius: 50%;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        "></div>`;
+
+        // Marqueur spécial si statut
+        if (siteStatus === 'bando') {
+          markerHtml = `<div style="font-size: 20px;">🟢</div>`;
+        } else if (siteStatus === 'urbex') {
+          markerHtml = `<div style="font-size: 20px;">🟣</div>`;
+        } else if (siteStatus === 'a_visiter') {
+          markerHtml = `<div style="font-size: 20px;">🔵</div>`;
+        } else if (siteStatus === 'teste') {
+          markerHtml = `<div style="font-size: 16px;">⚫</div>`;
+        } else if (siteStatus === 'mort') {
+          markerHtml = `<div style="font-size: 16px;">💀</div>`;
+        }
+
+        const marker = L.marker([friche.lat, friche.long], {
+          icon: L.divIcon({
+            className: 'custom-marker',
+            html: markerHtml,
+            iconSize: [markerSize + 4, markerSize + 4],
+            iconAnchor: [(markerSize + 4)/2, (markerSize + 4)/2]
+          })
+        }).addTo(map);
+
+        marker.on('click', () => showDetail(friche));
+        markers.push(marker);
+      });
+    }
+
+    function showDetail(friche) {
+      selectedFriche = friche;
+      const siteData = allStatuts[friche.site_id];
+      const currentStatus = siteData?.statut || null;
+      const lastUser = siteData?.last_user || null;
+      const comment = siteData?.commentaire || '';
+
+      // Sélectionner la ligne correspondante
+      document.querySelectorAll('.result-item.selected').forEach(el => {
+        el.classList.remove('selected');
+      });
+      const itemElement = document.querySelector(`.result-item[data-site-id="${friche.site_id}"]`);
+      if (itemElement) {
+        itemElement.classList.add('selected');
+      }
+
+      document.getElementById('detail-name').textContent = friche.site_nom || 'Sans nom';
+      document.getElementById('detail-location').textContent = `${friche.comm_nom || ''} (${friche.dep}) - ${friche.distance?.toFixed(1) || '?'} km`;
+
+      // Caractéristiques
+      const zoneLabel = getZoneLabel(friche.urba_zone_type);
+      document.getElementById('detail-chars').innerHTML = `
+        <div class="detail-item"><span class="label">Type</span><span class="value">${friche.site_type || '-'}</span></div>
+        <div class="detail-item"><span class="label">Score</span><span class="value ${friche.score >= 70 ? 'score-high' : ''}">${friche.score}/100</span></div>
+        <div class="detail-item"><span class="label">Surface terrain</span><span class="value">${friche.site_surface ? Math.round(friche.site_surface).toLocaleString() + ' m²' : '-'}</span></div>
+        <div class="detail-item"><span class="label">Zone PLU</span><span class="value zone-tag zone-${(friche.urba_zone_type || '').charAt(0).toLowerCase()}">${zoneLabel}</span></div>
+        <div class="detail-item"><span class="label">Statut</span><span class="value">${friche.site_statut || '-'}</span></div>
+        <div class="detail-item"><span class="label">Zone activités</span><span class="value">${friche.zone_activites || '-'}</span></div>
+        <div class="detail-item"><span class="label">Activité</span><span class="value">${friche.activite_libelle?.substring(0, 50) || '-'}</span></div>
+        <div class="detail-item"><span class="label">Fin activité</span><span class="value">${friche.activite_fin_annee || '-'}</span></div>
+        <div class="detail-item"><span class="label">Reconversion</span><span class="value">${friche.site_reconv_annee || 'Non prévue'}</span></div>
+      `;
+
+      // Bâtiments
+      document.getElementById('detail-bati').innerHTML = `
+        <div class="detail-item"><span class="label">Nb bâtiments</span><span class="value">${friche.bati_nombre || '-'}</span></div>
+        <div class="detail-item"><span class="label">Emprise bâtie</span><span class="value">${friche.emprise_sol_bati ? Math.round(friche.emprise_sol_bati).toLocaleString() + ' m²' : '-'}</span></div>
+        <div class="detail-item"><span class="label">État</span><span class="value">${friche.bati_etat || '-'}</span></div>
+        <div class="detail-item"><span class="label">Occupation</span><span class="value">${friche.site_occupation || '-'}</span></div>
+      `;
+
+      // Alerte danger (affichée seulement si pollution réelle détectée)
+      const dangerEl = document.getElementById('detail-danger');
+      const dangers = [];
+      const solPollution = (friche.sol_pollution_existe || '').toLowerCase().trim();
+      const batiPollution = (friche.bati_pollution || '').toLowerCase().trim();
+      const solDanger = ['oui', 'pollution avérée', 'pollution supposée', 'pollution probable', 'pollution traitée'];
+      const batiDanger = ['amiante', 'plomb', 'autre', 'probable'];
+      if (solDanger.includes(solPollution)) {
+        dangers.push('Pollution sol : ' + friche.sol_pollution_existe);
+      }
+      if (batiDanger.includes(batiPollution)) {
+        dangers.push('Pollution bâti : ' + friche.bati_pollution);
+      }
+      if (dangers.length > 0) {
+        dangerEl.className = 'danger-alert';
+        dangerEl.innerHTML = `<h4>Danger</h4>${dangers.map(d => `<div class="danger-item">${d}</div>`).join('')}`;
+        dangerEl.style.display = 'block';
+      } else {
+        dangerEl.style.display = 'none';
+      }
+
+      // Afficher le statut communautaire et le dernier user
+      const statusInfoEl = document.getElementById('detail-status-info');
+      if (currentStatus && lastUser) {
+        const statusEmoji = { a_visiter: '🔵', teste: '⚫', bando: '🟢', urbex: '🟣', mort: '💀' };
+        const statusLabel = { a_visiter: 'À visiter', teste: 'Testé', bando: 'Bando', urbex: 'Urbex', mort: 'Mort' };
+        statusInfoEl.innerHTML = `
+          <span class="result-status status-${currentStatus}">${statusEmoji[currentStatus]} ${statusLabel[currentStatus]}</span>
+          <span class="last-user">par <strong>${lastUser}</strong></span>
+        `;
+        statusInfoEl.style.display = 'flex';
+      } else {
+        statusInfoEl.innerHTML = '<span style="color:#666">Aucun statut</span>';
+        statusInfoEl.style.display = 'flex';
+      }
+
+      // Liens externes
+      document.getElementById('link-maps').href = `https://www.google.com/maps?q=${friche.lat},${friche.long}`;
+      document.getElementById('link-street').href = `https://www.google.com/maps?layer=c&cbll=${friche.lat},${friche.long}`;
+      document.getElementById('link-fiche').href = friche.site_url || `https://cartofriches.cerema.fr/cartofriches/?site_id=${friche.site_id}`;
+
+      // Boutons statut — highlight le statut actuel du site
+      document.querySelectorAll('.status-buttons button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      if (currentStatus) {
+        document.querySelector(`.btn-${currentStatus}`)?.classList.add('active');
+      }
+
+      // Charger le commentaire existant
+      document.getElementById('detail-comment').value = comment;
+
+      document.getElementById('detail-panel').classList.add('visible');
+    }
+
+    function closeDetail() {
+      document.getElementById('detail-panel').classList.remove('visible');
+      selectedFriche = null;
+    }
+    
+    function selectFriche(friche, itemElement) {
+      // Retirer la sélection précédente
+      document.querySelectorAll('.result-item.selected').forEach(el => {
+        el.classList.remove('selected');
+      });
+      // Ajouter la sélection
+      if (itemElement) {
+        itemElement.classList.add('selected');
+      }
+      if (friche) {
+        selectedFriche = friche;
+      }
+    }
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('visible');
+      setTimeout(() => t.classList.remove('visible'), 1500);
+    }
+
+    async function setStatus(status) {
+      const username = document.getElementById('username').value;
+      if (!username) {
+        alert('Entre ton pseudo d\'abord');
+        return;
+      }
+      if (!selectedFriche) return;
+
+      try {
+        if (status === null) {
+          // Supprimer le statut du site
+          await fetch(`${SUPABASE_URL}/rest/v1/statuts?site_id=eq.${selectedFriche.site_id}`, {
+            method: 'DELETE',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`
+            }
+          });
+
+          delete allStatuts[selectedFriche.site_id];
+        } else {
+          // Upsert par site_id uniquement — le dernier user qui change gagne
+          await fetch(`${SUPABASE_URL}/rest/v1/statuts`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json',
+              'Prefer': 'resolution=merge-duplicates'
+            },
+            body: JSON.stringify({
+              site_id: selectedFriche.site_id,
+              statut: status,
+              last_user: username
+            })
+          });
+
+          allStatuts[selectedFriche.site_id] = {
+            statut: status,
+            last_user: username,
+            commentaire: allStatuts[selectedFriche.site_id]?.commentaire || ''
+          };
+        }
+
+        // Rafraîchir l'affichage
+        showDetail(selectedFriche);
+        applyFiltersAndDisplay();
+        showToast(status ? 'Sauvegardé' : 'Statut supprimé');
+
+      } catch (error) {
+        console.error('Erreur sauvegarde statut:', error);
+        alert('Erreur lors de la sauvegarde');
+      }
+    }
+    
+    async function saveComment() {
+      const username = document.getElementById('username').value;
+      if (!username) {
+        alert('Entre ton pseudo d\'abord');
+        return;
+      }
+      if (!selectedFriche) return;
+
+      const commentaire = document.getElementById('detail-comment').value.trim();
+
+      try {
+        // Upsert par site_id avec commentaire + last_user
+        await fetch(`${SUPABASE_URL}/rest/v1/statuts`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({
+            site_id: selectedFriche.site_id,
+            commentaire: commentaire,
+            last_user: username
+          })
+        });
+
+        // Mettre à jour localement
+        if (allStatuts[selectedFriche.site_id]) {
+          allStatuts[selectedFriche.site_id].commentaire = commentaire;
+          allStatuts[selectedFriche.site_id].last_user = username;
+        } else {
+          allStatuts[selectedFriche.site_id] = {
+            statut: null,
+            last_user: username,
+            commentaire: commentaire
+          };
+        }
+
+        showToast('Commentaire enregistré');
+
+      } catch (error) {
+        console.error('Erreur sauvegarde commentaire:', error);
+        alert('Erreur lors de la sauvegarde');
+      }
+    }
+
+    // Lancer l'app
+    init();
+  </script>
+</body>
+</html>
