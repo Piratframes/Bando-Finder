@@ -771,6 +771,69 @@
       z-index: 1001;
     }
 
+    /* Login screen */
+    #login-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #1c1c1e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+    }
+    #login-screen.hidden { display: none; }
+    #login-screen .login-box {
+      background: #2c2c2e;
+      border: 1px solid #3a3a3c;
+      border-radius: 16px;
+      padding: 40px 35px;
+      text-align: center;
+      max-width: 360px;
+      width: 90%;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+    }
+    #login-screen .login-logo {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #f5a623;
+      margin-bottom: 8px;
+    }
+    #login-screen .login-sub {
+      font-size: 0.85rem;
+      color: #8e8e93;
+      margin-bottom: 25px;
+    }
+    #login-screen input {
+      width: 100%;
+      padding: 12px 15px;
+      border: 1px solid #3a3a3c;
+      border-radius: 10px;
+      background: #1c1c1e;
+      color: #e5e5ea;
+      font-size: 1rem;
+      text-align: center;
+      font-family: inherit;
+      margin-bottom: 15px;
+    }
+    #login-screen input:focus {
+      outline: none;
+      border-color: #f5a623;
+      box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.2);
+    }
+    #login-screen button {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 1rem;
+    }
+    #login-screen .login-error {
+      color: #dc2626;
+      font-size: 0.8rem;
+      margin-top: 10px;
+      min-height: 1.2em;
+    }
+
     /* Selection */
     ::selection {
       background: rgba(245, 166, 35, 0.3);
@@ -877,7 +940,17 @@
   </style>
 </head>
 <body>
-  <div id="loading">
+  <div id="login-screen">
+    <div class="login-box">
+      <div class="login-logo">🏚️ Bando Finder</div>
+      <div class="login-sub">Accès réservé aux pilotes</div>
+      <input type="password" id="login-password" placeholder="Mot de passe..." autofocus />
+      <button onclick="checkPassword()">Entrer</button>
+      <div class="login-error" id="login-error"></div>
+    </div>
+  </div>
+
+  <div id="loading" class="hidden">
     <div class="spinner"></div>
     <p>Chargement des données...</p>
   </div>
@@ -2004,8 +2077,34 @@
       }
     }
 
-    // Lancer l'app
-    init();
+    // ========== LOGIN ==========
+    const APP_PASSWORD = 'AmourDuBando123';
+
+    function checkPassword() {
+      const input = document.getElementById('login-password').value;
+      if (input === APP_PASSWORD) {
+        localStorage.setItem('bando_auth', 'ok');
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('loading').classList.remove('hidden');
+        init();
+      } else {
+        document.getElementById('login-error').textContent = 'Mauvais mot de passe';
+        document.getElementById('login-password').value = '';
+        document.getElementById('login-password').focus();
+      }
+    }
+
+    // Enter pour valider
+    document.getElementById('login-password').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') checkPassword();
+    });
+
+    // Si déjà authentifié, skip le login
+    if (localStorage.getItem('bando_auth') === 'ok') {
+      document.getElementById('login-screen').classList.add('hidden');
+      document.getElementById('loading').classList.remove('hidden');
+      init();
+    }
   </script>
 </body>
 </html>
