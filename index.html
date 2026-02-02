@@ -32,6 +32,8 @@
       gap: 20px;
       flex-wrap: wrap;
       border-bottom: 1px solid #3a3a3c;
+      position: relative;
+      z-index: 1000;
     }
 
     .logo {
@@ -485,6 +487,8 @@
       padding: 15px;
       background: #1c1c1e;
       border-bottom: 1px solid #3a3a3c;
+      position: relative;
+      z-index: 1000;
     }
     
     #filters-panel.visible {
@@ -638,6 +642,127 @@
     .result-zone.zone-a, .result-zone.zone-n { background: rgba(16, 185, 129, 0.2); color: #6ee7b7; }
     .result-zone.zone-au { background: rgba(245, 166, 35, 0.2); color: #f5a623; }
 
+    /* Multi-select dropdown */
+    .multi-select {
+      position: relative;
+      width: 100%;
+    }
+    .multi-select-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 8px;
+      border: 1px solid #3a3a3c;
+      border-radius: 8px;
+      background: #1c1c1e;
+      color: #e5e5ea;
+      font-size: 0.85rem;
+      cursor: pointer;
+      min-height: 34px;
+      user-select: none;
+      transition: border-color 0.2s;
+    }
+    .multi-select-trigger:hover {
+      border-color: #48484a;
+    }
+    .multi-select.open .multi-select-trigger {
+      border-color: #f5a623;
+      box-shadow: 0 0 0 2px rgba(245, 166, 35, 0.2);
+    }
+    .multi-select-trigger .ms-text {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .multi-select-trigger .ms-text.placeholder {
+      color: #636366;
+    }
+    .multi-select-trigger .ms-arrow {
+      margin-left: 6px;
+      font-size: 0.6rem;
+      color: #636366;
+      transition: transform 0.2s;
+    }
+    .multi-select.open .ms-arrow {
+      transform: rotate(180deg);
+    }
+    .multi-select-trigger .ms-count {
+      background: #f5a623;
+      color: #1c1c1e;
+      font-size: 0.65rem;
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 10px;
+      margin-left: 6px;
+      flex-shrink: 0;
+    }
+    .multi-select-dropdown {
+      display: none;
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: #2c2c2e;
+      border: 1px solid #3a3a3c;
+      border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+      z-index: 10000;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+    .multi-select.open .multi-select-dropdown {
+      display: block;
+    }
+    .multi-select-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 10px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      transition: background 0.15s;
+    }
+    .multi-select-option:hover {
+      background: rgba(255,255,255,0.06);
+    }
+    .multi-select-option.selected {
+      background: rgba(245, 166, 35, 0.1);
+    }
+    .multi-select-option .ms-check {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #48484a;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+    }
+    .multi-select-option.selected .ms-check {
+      background: #f5a623;
+      border-color: #f5a623;
+    }
+    .multi-select-option.selected .ms-check::after {
+      content: '✓';
+      color: #1c1c1e;
+      font-size: 0.65rem;
+      font-weight: 700;
+    }
+    .multi-select-option .ms-label {
+      flex: 1;
+    }
+    /* Scrollbar dropdown */
+    .multi-select-dropdown::-webkit-scrollbar { width: 5px; }
+    .multi-select-dropdown::-webkit-scrollbar-track { background: transparent; }
+    .multi-select-dropdown::-webkit-scrollbar-thumb { background: #3a3a3c; border-radius: 3px; }
+
+    /* Header multi-select sizing */
+    .controls .multi-select {
+      min-width: 170px;
+    }
+
     /* Selection */
     ::selection {
       background: rgba(245, 166, 35, 0.3);
@@ -772,16 +897,21 @@
         <button id="search-btn">Rechercher</button>
       </div>
       <div class="control-group">
-        <select id="filter-status">
-          <option value="">Tous les statuts</option>
-          <option value="a_visiter">🔵 À visiter</option>
-          <option value="teste">🟠 Testés</option>
-          <option value="bando">🟢 Bandos</option>
-          <option value="urbex">🟣 Urbex</option>
-          <option value="mort">💀 Ratés</option>
-          <option value="any">📌 Avec un statut</option>
-          <option value="none">⭕ Sans statut</option>
-        </select>
+        <div class="multi-select" id="ms-filter-status" data-placeholder="Tous les statuts">
+          <div class="multi-select-trigger" tabindex="0">
+            <span class="ms-text placeholder">Tous les statuts</span>
+            <span class="ms-arrow">▼</span>
+          </div>
+          <div class="multi-select-dropdown">
+            <div class="multi-select-option" data-value="a_visiter"><span class="ms-check"></span><span class="ms-label">🔵 À visiter</span></div>
+            <div class="multi-select-option" data-value="teste"><span class="ms-check"></span><span class="ms-label">🟠 Testés</span></div>
+            <div class="multi-select-option" data-value="bando"><span class="ms-check"></span><span class="ms-label">🟢 Bandos</span></div>
+            <div class="multi-select-option" data-value="urbex"><span class="ms-check"></span><span class="ms-label">🟣 Urbex</span></div>
+            <div class="multi-select-option" data-value="mort"><span class="ms-check"></span><span class="ms-label">💀 Ratés</span></div>
+            <div class="multi-select-option" data-value="any"><span class="ms-check"></span><span class="ms-label">📌 Avec un statut</span></div>
+            <div class="multi-select-option" data-value="none"><span class="ms-check"></span><span class="ms-label">⭕ Sans statut</span></div>
+          </div>
+        </div>
       </div>
       <button class="btn-secondary filters-toggle" id="filters-toggle">⚙️ Plus de filtres</button>
     </div>
@@ -791,37 +921,52 @@
     <div class="filters-grid">
       <div class="filter-group">
         <label>Type de friche</label>
-        <select id="filter-type">
-          <option value="">Tous</option>
-          <option value="friche industrielle">Industrielle</option>
-          <option value="friche commerciale">Commerciale</option>
-          <option value="friche ferroviaire">Ferroviaire</option>
-          <option value="friche militaire">Militaire</option>
-          <option value="friche hospitalière">Hospitalière</option>
-          <option value="friche d'habitat">Habitat</option>
-        </select>
+        <div class="multi-select" id="ms-filter-type" data-placeholder="Tous">
+          <div class="multi-select-trigger" tabindex="0">
+            <span class="ms-text placeholder">Tous</span>
+            <span class="ms-arrow">▼</span>
+          </div>
+          <div class="multi-select-dropdown">
+            <div class="multi-select-option" data-value="friche industrielle"><span class="ms-check"></span><span class="ms-label">Industrielle</span></div>
+            <div class="multi-select-option" data-value="friche commerciale"><span class="ms-check"></span><span class="ms-label">Commerciale</span></div>
+            <div class="multi-select-option" data-value="friche ferroviaire"><span class="ms-check"></span><span class="ms-label">Ferroviaire</span></div>
+            <div class="multi-select-option" data-value="friche militaire"><span class="ms-check"></span><span class="ms-label">Militaire</span></div>
+            <div class="multi-select-option" data-value="friche hospitalière"><span class="ms-check"></span><span class="ms-label">Hospitalière</span></div>
+            <div class="multi-select-option" data-value="friche d'habitat"><span class="ms-check"></span><span class="ms-label">Habitat</span></div>
+          </div>
+        </div>
       </div>
       <div class="filter-group">
         <label>Surface terrain</label>
-        <select id="filter-surface">
-          <option value="">Toutes</option>
-          <option value="0-1000">< 1 000 m²</option>
-          <option value="1000-5000">1 000 - 5 000 m²</option>
-          <option value="5000-10000">5 000 - 10 000 m²</option>
-          <option value="10000-50000">10 000 - 50 000 m²</option>
-          <option value="50000-">> 50 000 m²</option>
-        </select>
+        <div class="multi-select" id="ms-filter-surface" data-placeholder="Toutes">
+          <div class="multi-select-trigger" tabindex="0">
+            <span class="ms-text placeholder">Toutes</span>
+            <span class="ms-arrow">▼</span>
+          </div>
+          <div class="multi-select-dropdown">
+            <div class="multi-select-option" data-value="0-1000"><span class="ms-check"></span><span class="ms-label">&lt; 1 000 m²</span></div>
+            <div class="multi-select-option" data-value="1000-5000"><span class="ms-check"></span><span class="ms-label">1 000 - 5 000 m²</span></div>
+            <div class="multi-select-option" data-value="5000-10000"><span class="ms-check"></span><span class="ms-label">5 000 - 10 000 m²</span></div>
+            <div class="multi-select-option" data-value="10000-50000"><span class="ms-check"></span><span class="ms-label">10 000 - 50 000 m²</span></div>
+            <div class="multi-select-option" data-value="50000-"><span class="ms-check"></span><span class="ms-label">&gt; 50 000 m²</span></div>
+          </div>
+        </div>
       </div>
       <div class="filter-group">
         <label>Surface bâtie</label>
-        <select id="filter-bati">
-          <option value="">Toutes</option>
-          <option value="0-500">< 500 m²</option>
-          <option value="500-1000">500 - 1 000 m²</option>
-          <option value="1000-2000">1 000 - 2 000 m²</option>
-          <option value="2000-5000">2 000 - 5 000 m²</option>
-          <option value="5000-">> 5 000 m²</option>
-        </select>
+        <div class="multi-select" id="ms-filter-bati" data-placeholder="Toutes">
+          <div class="multi-select-trigger" tabindex="0">
+            <span class="ms-text placeholder">Toutes</span>
+            <span class="ms-arrow">▼</span>
+          </div>
+          <div class="multi-select-dropdown">
+            <div class="multi-select-option" data-value="0-500"><span class="ms-check"></span><span class="ms-label">&lt; 500 m²</span></div>
+            <div class="multi-select-option" data-value="500-1000"><span class="ms-check"></span><span class="ms-label">500 - 1 000 m²</span></div>
+            <div class="multi-select-option" data-value="1000-2000"><span class="ms-check"></span><span class="ms-label">1 000 - 2 000 m²</span></div>
+            <div class="multi-select-option" data-value="2000-5000"><span class="ms-check"></span><span class="ms-label">2 000 - 5 000 m²</span></div>
+            <div class="multi-select-option" data-value="5000-"><span class="ms-check"></span><span class="ms-label">&gt; 5 000 m²</span></div>
+          </div>
+        </div>
       </div>
       <div class="filter-group">
         <label>Nb bâtiments min</label>
@@ -829,30 +974,45 @@
       </div>
       <div class="filter-group">
         <label>Statut friche</label>
-        <select id="filter-statut-friche">
-          <option value="">Tous</option>
-          <option value="friche sans projet">Sans projet</option>
-          <option value="friche potentielle">Potentielle</option>
-          <option value="friche avec projet">Avec projet</option>
-        </select>
+        <div class="multi-select" id="ms-filter-statut-friche" data-placeholder="Tous">
+          <div class="multi-select-trigger" tabindex="0">
+            <span class="ms-text placeholder">Tous</span>
+            <span class="ms-arrow">▼</span>
+          </div>
+          <div class="multi-select-dropdown">
+            <div class="multi-select-option" data-value="friche sans projet"><span class="ms-check"></span><span class="ms-label">Sans projet</span></div>
+            <div class="multi-select-option" data-value="friche potentielle"><span class="ms-check"></span><span class="ms-label">Potentielle</span></div>
+            <div class="multi-select-option" data-value="friche avec projet"><span class="ms-check"></span><span class="ms-label">Avec projet</span></div>
+          </div>
+        </div>
       </div>
       <div class="filter-group">
         <label>Zone d'activités</label>
-        <select id="filter-zone">
-          <option value="">Tous</option>
-          <option value="oui">Oui (isolé)</option>
-          <option value="non">Non</option>
-        </select>
+        <div class="multi-select" id="ms-filter-zone" data-placeholder="Tous">
+          <div class="multi-select-trigger" tabindex="0">
+            <span class="ms-text placeholder">Tous</span>
+            <span class="ms-arrow">▼</span>
+          </div>
+          <div class="multi-select-dropdown">
+            <div class="multi-select-option" data-value="oui"><span class="ms-check"></span><span class="ms-label">Oui (isolé)</span></div>
+            <div class="multi-select-option" data-value="non"><span class="ms-check"></span><span class="ms-label">Non</span></div>
+          </div>
+        </div>
       </div>
       <div class="filter-group">
         <label>Zone PLU</label>
-        <select id="filter-urba">
-          <option value="">Toutes</option>
-          <option value="U">Urbaine (en ville)</option>
-          <option value="AU">A urbaniser (périphérie)</option>
-          <option value="A">Agricole (campagne)</option>
-          <option value="N">Naturelle (isolé)</option>
-        </select>
+        <div class="multi-select" id="ms-filter-urba" data-placeholder="Toutes">
+          <div class="multi-select-trigger" tabindex="0">
+            <span class="ms-text placeholder">Toutes</span>
+            <span class="ms-arrow">▼</span>
+          </div>
+          <div class="multi-select-dropdown">
+            <div class="multi-select-option" data-value="U"><span class="ms-check"></span><span class="ms-label">Urbaine (en ville)</span></div>
+            <div class="multi-select-option" data-value="AU"><span class="ms-check"></span><span class="ms-label">A urbaniser (périphérie)</span></div>
+            <div class="multi-select-option" data-value="A"><span class="ms-check"></span><span class="ms-label">Agricole (campagne)</span></div>
+            <div class="multi-select-option" data-value="N"><span class="ms-check"></span><span class="ms-label">Naturelle (isolé)</span></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -1053,6 +1213,78 @@
       }
     }
 
+    // ========== MULTI-SELECT COMPONENT ==========
+    function initMultiSelects() {
+      document.querySelectorAll('.multi-select').forEach(ms => {
+        const trigger = ms.querySelector('.multi-select-trigger');
+        const dropdown = ms.querySelector('.multi-select-dropdown');
+        const options = ms.querySelectorAll('.multi-select-option');
+        const textEl = ms.querySelector('.ms-text');
+        const placeholder = ms.dataset.placeholder || 'Tous';
+
+        // Toggle dropdown on click
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          // Close all other dropdowns
+          document.querySelectorAll('.multi-select.open').forEach(other => {
+            if (other !== ms) other.classList.remove('open');
+          });
+          ms.classList.toggle('open');
+        });
+
+        // Click on option
+        options.forEach(opt => {
+          opt.addEventListener('click', (e) => {
+            e.stopPropagation();
+            opt.classList.toggle('selected');
+            updateMultiSelectDisplay(ms);
+            applyFiltersAndDisplay();
+          });
+        });
+      });
+
+      // Close all dropdowns when clicking outside
+      document.addEventListener('click', () => {
+        document.querySelectorAll('.multi-select.open').forEach(ms => {
+          ms.classList.remove('open');
+        });
+      });
+    }
+
+    function updateMultiSelectDisplay(ms) {
+      const textEl = ms.querySelector('.ms-text');
+      const placeholder = ms.dataset.placeholder || 'Tous';
+      const selected = ms.querySelectorAll('.multi-select-option.selected');
+
+      // Remove old count badge if any
+      const oldCount = ms.querySelector('.ms-count');
+      if (oldCount) oldCount.remove();
+
+      if (selected.length === 0) {
+        textEl.textContent = placeholder;
+        textEl.classList.add('placeholder');
+      } else {
+        // Show labels of selected items
+        const labels = Array.from(selected).map(s => s.querySelector('.ms-label').textContent);
+        textEl.textContent = labels.join(', ');
+        textEl.classList.remove('placeholder');
+        // Add count badge
+        if (selected.length > 1) {
+          const badge = document.createElement('span');
+          badge.className = 'ms-count';
+          badge.textContent = selected.length;
+          ms.querySelector('.multi-select-trigger').insertBefore(badge, ms.querySelector('.ms-arrow'));
+        }
+      }
+    }
+
+    function getMultiSelectValues(msId) {
+      const ms = document.getElementById(msId);
+      if (!ms) return [];
+      const selected = ms.querySelectorAll('.multi-select-option.selected');
+      return Array.from(selected).map(s => s.dataset.value);
+    }
+
     function setupEventListeners() {
       document.getElementById('geolocate-btn').addEventListener('click', geolocate);
       document.getElementById('city-btn').addEventListener('click', searchByCity);
@@ -1060,13 +1292,13 @@
         if (e.key === 'Enter') searchByCity();
       });
       document.getElementById('search-btn').addEventListener('click', search);
-      document.getElementById('filter-status').addEventListener('change', applyFiltersAndDisplay);
       document.getElementById('filters-toggle').addEventListener('click', toggleFilters);
-      
-      // Filtres avancés
-      ['filter-type', 'filter-surface', 'filter-bati', 'filter-nb-bati', 'filter-statut-friche', 'filter-zone', 'filter-urba'].forEach(id => {
-        document.getElementById(id).addEventListener('change', applyFiltersAndDisplay);
-      });
+
+      // Nb bâtiments (reste un input classique)
+      document.getElementById('filter-nb-bati').addEventListener('change', applyFiltersAndDisplay);
+
+      // Init multi-selects
+      initMultiSelects();
 
       // Sauvegarde pseudo
       document.getElementById('username').addEventListener('change', (e) => {
@@ -1274,67 +1506,86 @@
     }
 
     function applyFiltersAndDisplay() {
-      const username = document.getElementById('username').value;
-      const statusFilter = document.getElementById('filter-status').value;
-      const typeFilter = document.getElementById('filter-type').value;
-      const surfaceRange = document.getElementById('filter-surface').value;
-      const batiRange = document.getElementById('filter-bati').value;
+      const statusFilters = getMultiSelectValues('ms-filter-status');
+      const typeFilters = getMultiSelectValues('ms-filter-type');
+      const surfaceRanges = getMultiSelectValues('ms-filter-surface');
+      const batiRanges = getMultiSelectValues('ms-filter-bati');
       const nbBatiMin = parseInt(document.getElementById('filter-nb-bati').value) || 0;
-      const statutFricheFilter = document.getElementById('filter-statut-friche').value;
-      const zoneFilter = document.getElementById('filter-zone').value;
-      const urbaFilter = document.getElementById('filter-urba').value;
+      const statutFricheFilters = getMultiSelectValues('ms-filter-statut-friche');
+      const zoneFilters = getMultiSelectValues('ms-filter-zone');
+      const urbaFilters = getMultiSelectValues('ms-filter-urba');
 
       let results = [...filteredFriches];
 
-      // Filtre statut global
-      if (statusFilter) {
-        if (statusFilter === 'any') {
-          results = results.filter(f => allStatuts[f.site_id]?.statut);
-        } else if (statusFilter === 'none') {
-          results = results.filter(f => !allStatuts[f.site_id]?.statut);
-        } else {
-          results = results.filter(f => allStatuts[f.site_id]?.statut === statusFilter);
-        }
+      // Filtre statut global (multi)
+      if (statusFilters.length > 0) {
+        results = results.filter(f => {
+          const siteStatut = allStatuts[f.site_id]?.statut;
+          // Gérer les valeurs spéciales "any" et "none"
+          if (statusFilters.includes('any') && siteStatut) return true;
+          if (statusFilters.includes('none') && !siteStatut) return true;
+          // Valeurs de statut classiques
+          const classicFilters = statusFilters.filter(v => v !== 'any' && v !== 'none');
+          if (classicFilters.length > 0 && classicFilters.includes(siteStatut)) return true;
+          return false;
+        });
       }
 
-      // Filtres avancés
-      if (typeFilter) {
-        results = results.filter(f => f.site_type === typeFilter);
+      // Type de friche (multi)
+      if (typeFilters.length > 0) {
+        results = results.filter(f => typeFilters.includes(f.site_type));
       }
-      if (surfaceRange) {
-        const [min, max] = surfaceRange.split('-').map(v => v ? parseInt(v) : null);
+
+      // Surface terrain (multi-ranges, union)
+      if (surfaceRanges.length > 0) {
         results = results.filter(f => {
           const val = f.site_surface || 0;
-          if (min !== null && val < min) return false;
-          if (max !== null && val > max) return false;
-          return true;
+          return surfaceRanges.some(range => {
+            const [min, max] = range.split('-').map(v => v ? parseInt(v) : null);
+            if (min !== null && val < min) return false;
+            if (max !== null && val > max) return false;
+            return true;
+          });
         });
       }
-      if (batiRange) {
-        const [min, max] = batiRange.split('-').map(v => v ? parseInt(v) : null);
+
+      // Surface bâtie (multi-ranges, union)
+      if (batiRanges.length > 0) {
         results = results.filter(f => {
           const val = f.emprise_sol_bati || 0;
-          if (min !== null && val < min) return false;
-          if (max !== null && val > max) return false;
-          return true;
+          return batiRanges.some(range => {
+            const [min, max] = range.split('-').map(v => v ? parseInt(v) : null);
+            if (min !== null && val < min) return false;
+            if (max !== null && val > max) return false;
+            return true;
+          });
         });
       }
+
       if (nbBatiMin) {
         results = results.filter(f => (f.bati_nombre || 0) >= nbBatiMin);
       }
-      if (statutFricheFilter) {
-        results = results.filter(f => f.site_statut === statutFricheFilter);
+
+      // Statut friche (multi)
+      if (statutFricheFilters.length > 0) {
+        results = results.filter(f => statutFricheFilters.includes(f.site_statut));
       }
-      if (zoneFilter) {
-        results = results.filter(f => f.zone_activites === zoneFilter);
+
+      // Zone activités (multi)
+      if (zoneFilters.length > 0) {
+        results = results.filter(f => zoneFilters.includes(f.zone_activites));
       }
-      if (urbaFilter) {
+
+      // Zone PLU (multi)
+      if (urbaFilters.length > 0) {
         results = results.filter(f => {
           const z = (f.urba_zone_type || '').toUpperCase();
-          if (urbaFilter === 'AU') return z.startsWith('AU');
-          if (urbaFilter === 'A') return z === 'A' || z === 'AH';
-          if (urbaFilter === 'N') return z === 'N' || z === 'NH';
-          return z === urbaFilter;
+          return urbaFilters.some(uf => {
+            if (uf === 'AU') return z.startsWith('AU');
+            if (uf === 'A') return z === 'A' || z === 'AH';
+            if (uf === 'N') return z === 'N' || z === 'NH';
+            return z === uf;
+          });
         });
       }
 
