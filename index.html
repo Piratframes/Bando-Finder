@@ -177,21 +177,22 @@
     }
     
     .btn-maps {
-      background: #3a3a3c;
+      background: #f5a623;
       border: none;
       padding: 4px 8px;
       border-radius: 6px;
       cursor: pointer;
-      font-size: 0.85rem;
-      color: #e5e5ea;
+      font-size: 1rem;
+      color: #1c1c1e;
       text-decoration: none;
       display: inline-flex;
       align-items: center;
-      gap: 4px;
+      font-weight: 600;
+      transition: background 0.2s;
     }
 
     .btn-maps:hover {
-      background: #48484a;
+      background: #f7b84e;
     }
     
     .result-header {
@@ -237,7 +238,7 @@
     }
     
     .status-a_visiter { background: #3b82f6; color: white; }
-    .status-teste { background: #6b7280; color: white; }
+    .status-teste { background: #f59e0b; color: white; }
     .status-bando { background: #10b981; color: white; }
     .status-urbex { background: #8b5cf6; color: white; }
     .status-mort { background: #dc2626; color: white; }
@@ -299,21 +300,17 @@
     /* Detail panel */
     #detail-panel {
       display: none;
-      position: absolute;
-      top: 60px;
-      right: 520px;
-      width: 420px;
-      max-height: calc(100vh - 80px);
+      width: 380px;
       background: #2c2c2e;
-      border-radius: 12px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-      z-index: 1000;
+      border-left: 1px solid #3a3a3c;
+      border-right: 1px solid #3a3a3c;
+      flex-direction: column;
       overflow: hidden;
-      border: 1px solid #3a3a3c;
+      position: relative;
     }
-    
+
     #detail-panel.visible {
-      display: block;
+      display: flex;
     }
     
     .detail-header {
@@ -353,7 +350,7 @@
     .detail-content {
       padding: 15px;
       overflow-y: auto;
-      max-height: calc(100vh - 250px);
+      flex: 1;
     }
     
     .detail-section {
@@ -413,8 +410,8 @@
     .btn-a_visiter:hover { background: #60a5fa; }
     .btn-a_visiter.active { box-shadow: 0 0 0 2px #f5a623; }
 
-    .btn-teste { background: #6b7280; }
-    .btn-teste:hover { background: #9ca3af; }
+    .btn-teste { background: #f59e0b; }
+    .btn-teste:hover { background: #fbbf24; }
     .btn-teste.active { box-shadow: 0 0 0 2px #f5a623; }
 
     .btn-bando { background: #10b981; }
@@ -566,16 +563,30 @@
       background: #2c2c2e;
     }
     
-    .marker-pepite {
-      filter: hue-rotate(0deg);
+
+    /* Star rating */
+    .star-rating {
+      display: flex;
+      gap: 4px;
     }
-    
-    .marker-moyen {
-      filter: hue-rotate(40deg);
+    .star-rating .star {
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: #636366;
+      transition: color 0.15s, transform 0.15s;
     }
-    
-    .marker-bof {
-      filter: hue-rotate(180deg) saturate(0.3);
+    .star-rating .star:hover,
+    .star-rating .star.hovered {
+      transform: scale(1.2);
+    }
+    .star-rating .star.active {
+      color: #f5a623;
+    }
+
+    .result-note {
+      font-size: 0.75rem;
+      color: #f5a623;
+      white-space: nowrap;
     }
 
     /* Focus states */
@@ -641,7 +652,7 @@
   </div>
 
   <header>
-    <div class="logo">🏚️ Bando Finder</div>
+    <div class="logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 6px;"><path d="M3 21V10L7 6L10 9V7L14 3L17 6V4L21 8V21H3Z" stroke="white" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="M3 21H21" stroke="white" stroke-width="1.8"/><rect x="6" y="13" width="3" height="3" rx="0.5" stroke="white" stroke-width="1.2" fill="none"/><rect x="13" y="10" width="3" height="3" rx="0.5" stroke="white" stroke-width="1.2" fill="none"/><line x1="11" y1="14" x2="11" y2="21" stroke="white" stroke-width="1.2"/><rect x="15" y="16" width="2.5" height="5" rx="0.5" stroke="white" stroke-width="1.2" fill="none"/><line x1="8" y1="6" x2="9" y2="8" stroke="white" stroke-width="1" stroke-dasharray="1.5 1.5"/></svg> Bando Finder</div>
     <div class="controls">
       <div class="control-group">
         <label>Pseudo</label>
@@ -663,18 +674,13 @@
         <button id="search-btn">Rechercher</button>
       </div>
       <div class="control-group">
-        <label>
-          <input type="checkbox" id="pepites-only" /> Pépites seulement
-        </label>
-      </div>
-      <div class="control-group">
         <select id="filter-status">
           <option value="">Tous les statuts</option>
           <option value="a_visiter">🔵 À visiter</option>
-          <option value="teste">⚫ Testés</option>
+          <option value="teste">🟠 Testés</option>
           <option value="bando">🟢 Bandos</option>
           <option value="urbex">🟣 Urbex</option>
-          <option value="mort">💀 Morts</option>
+          <option value="mort">💀 Ratés</option>
           <option value="any">📌 Avec un statut</option>
           <option value="none">⭕ Sans statut</option>
         </select>
@@ -755,6 +761,54 @@
 
   <main>
     <div id="map"></div>
+    <div id="detail-panel">
+      <button class="detail-close" onclick="closeDetail()">&times;</button>
+      <div class="detail-header">
+        <h3 id="detail-name">-</h3>
+        <div class="location" id="detail-location">-</div>
+        <div class="external-links" id="detail-links" style="margin-top:10px">
+          <a id="link-maps" href="#" target="_blank">Google Maps</a>
+          <a id="link-street" href="#" target="_blank">Street View</a>
+          <a id="link-fiche" href="#" target="_blank">Cartofriches</a>
+        </div>
+      </div>
+      <div class="detail-content">
+        <div class="detail-section">
+          <h4>Caractéristiques</h4>
+          <div class="detail-grid" id="detail-chars"></div>
+        </div>
+        <div class="detail-section">
+          <h4>Bâtiments</h4>
+          <div class="detail-grid" id="detail-bati"></div>
+        </div>
+        <div id="detail-danger" style="display:none"></div>
+      </div>
+      <div class="detail-actions">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:5px;">
+          <div class="detail-section" style="margin-bottom:0;">
+            <h4>Statut communautaire</h4>
+            <div id="detail-status-info" style="display:flex; align-items:center; gap:8px; font-size:0.85rem; flex-wrap:wrap;"></div>
+          </div>
+          <div class="detail-section" style="margin-bottom:0;">
+            <h4>Note</h4>
+            <div class="star-rating" id="detail-stars"></div>
+            <div id="detail-note-info" class="last-user" style="margin-top:4px;"></div>
+          </div>
+        </div>
+        <div class="status-buttons">
+          <button class="btn-a_visiter" onclick="setStatus('a_visiter')">À visiter</button>
+          <button class="btn-teste" onclick="setStatus('teste')">Testé</button>
+          <button class="btn-bando" onclick="setStatus('bando')">Bando!</button>
+          <button class="btn-urbex" onclick="setStatus('urbex')">Urbex</button>
+          <button class="btn-mort" onclick="setStatus('mort')">Raté</button>
+          <button class="btn-clear" onclick="setStatus(null)">✕</button>
+        </div>
+        <div class="comment-section">
+          <textarea id="detail-comment" placeholder="Ajouter un commentaire..." rows="2"></textarea>
+          <button onclick="saveComment()" class="btn-secondary">💾 Enregistrer</button>
+        </div>
+      </div>
+    </div>
     <div id="sidebar">
       <div class="sidebar-header">
         <h2>Résultats</h2>
@@ -763,48 +817,6 @@
       <div id="results"></div>
     </div>
   </main>
-
-  <div id="detail-panel">
-    <button class="detail-close" onclick="closeDetail()">&times;</button>
-    <div class="detail-header">
-      <h3 id="detail-name">-</h3>
-      <div class="location" id="detail-location">-</div>
-    </div>
-    <div class="detail-content">
-      <div class="external-links" id="detail-links" style="margin-bottom:15px">
-        <a id="link-maps" href="#" target="_blank">Google Maps</a>
-        <a id="link-street" href="#" target="_blank">Street View</a>
-        <a id="link-fiche" href="#" target="_blank">Cartofriches</a>
-      </div>
-      <div class="detail-section">
-        <h4>Caractéristiques</h4>
-        <div class="detail-grid" id="detail-chars"></div>
-      </div>
-      <div class="detail-section">
-        <h4>Bâtiments</h4>
-        <div class="detail-grid" id="detail-bati"></div>
-      </div>
-      <div id="detail-danger" style="display:none"></div>
-      <div class="detail-section">
-        <h4>Statut communautaire</h4>
-        <div id="detail-status-info" style="display:flex; align-items:center; gap:10px; font-size:0.9rem;"></div>
-      </div>
-    </div>
-    <div class="detail-actions">
-      <div class="status-buttons">
-        <button class="btn-a_visiter" onclick="setStatus('a_visiter')">À visiter</button>
-        <button class="btn-teste" onclick="setStatus('teste')">Testé</button>
-        <button class="btn-bando" onclick="setStatus('bando')">Bando!</button>
-        <button class="btn-urbex" onclick="setStatus('urbex')">Urbex</button>
-        <button class="btn-mort" onclick="setStatus('mort')">Mort</button>
-        <button class="btn-clear" onclick="setStatus(null)">✕</button>
-      </div>
-      <div class="comment-section">
-        <textarea id="detail-comment" placeholder="Ajouter un commentaire..." rows="2"></textarea>
-        <button onclick="saveComment()" class="btn-secondary">💾 Enregistrer</button>
-      </div>
-    </div>
-  </div>
 
   <div class="toast" id="toast"></div>
 
@@ -932,7 +944,8 @@
           allStatuts[s.site_id] = {
             statut: s.statut,
             last_user: s.last_user || s.username || '?',
-            commentaire: s.commentaire || ''
+            commentaire: s.commentaire || '',
+            note: s.note || null
           };
         });
 
@@ -949,7 +962,6 @@
         if (e.key === 'Enter') searchByCity();
       });
       document.getElementById('search-btn').addEventListener('click', search);
-      document.getElementById('pepites-only').addEventListener('change', applyFiltersAndDisplay);
       document.getElementById('filter-status').addEventListener('change', applyFiltersAndDisplay);
       document.getElementById('filters-toggle').addEventListener('click', toggleFilters);
       
@@ -1165,7 +1177,6 @@
 
     function applyFiltersAndDisplay() {
       const username = document.getElementById('username').value;
-      const pepitesOnly = document.getElementById('pepites-only').checked;
       const statusFilter = document.getElementById('filter-status').value;
       const typeFilter = document.getElementById('filter-type').value;
       const surfaceRange = document.getElementById('filter-surface').value;
@@ -1176,11 +1187,6 @@
       const urbaFilter = document.getElementById('filter-urba').value;
 
       let results = [...filteredFriches];
-
-      // Filtre pépites
-      if (pepitesOnly) {
-        results = results.filter(f => f.score >= 70);
-      }
 
       // Filtre statut global
       if (statusFilter) {
@@ -1267,15 +1273,15 @@
           if (!e.target.closest('.btn-maps')) {
             selectFriche(friche, item);
             showDetail(friche);
+            map.flyTo([friche.lat, friche.long], 15, { duration: 0.8 });
           }
         };
 
-        const scoreBadge = friche.score >= 70 ? '🔥' : friche.score >= 40 ? '🟠' : '⚪';
-
         let statusBadge = '';
         if (siteStatus) {
-          const statusEmoji = { a_visiter: '🔵', teste: '⚫', bando: '🟢', urbex: '🟣', mort: '💀' };
-          statusBadge = `<span class="result-status status-${siteStatus}">${statusEmoji[siteStatus]} ${siteStatus.replace('_', ' ')}</span>`;
+          const statusEmoji = { a_visiter: '🔵', teste: '🟠', bando: '🟢', urbex: '🟣', mort: '💀' };
+          const statusLabel = { a_visiter: 'À visiter', teste: 'Testé', bando: 'Bando', urbex: 'Urbex', mort: 'Raté' };
+          statusBadge = `<span class="result-status status-${siteStatus}">${statusEmoji[siteStatus]} ${statusLabel[siteStatus] || siteStatus}</span>`;
           if (lastUser) {
             statusBadge += `<span class="last-user">par <strong>${lastUser}</strong></span>`;
           }
@@ -1285,57 +1291,46 @@
         const zClass = getZoneClass(friche.urba_zone_type);
         const zLabel = getZoneLabel(friche.urba_zone_type);
         const zoneBadge = zClass ? `<span class="result-zone zone-${zClass}">${zLabel}</span>` : '';
+        const siteNote = siteData?.note || 0;
+        const noteBadge = siteNote ? `<span class="result-note">${'★'.repeat(siteNote)}${'☆'.repeat(5 - siteNote)}</span>` : '';
 
         item.innerHTML = `
           <div class="result-header">
-            <span class="badge">${scoreBadge}</span>
+            <a href="${mapsUrl}" target="_blank" class="btn-maps" onclick="event.stopPropagation()"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1c1c1e"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg></a>
             <span class="result-name">${friche.site_nom || 'Sans nom'}</span>
             <span class="result-distance">${friche.distance.toFixed(1)} km</span>
-            <div class="result-actions">
-              <a href="${mapsUrl}" target="_blank" class="btn-maps" onclick="selectFriche(null, this.closest('.result-item'))">📍 Maps</a>
-            </div>
           </div>
           <div class="result-meta">
+            ${statusBadge}
+            ${noteBadge}
+            ${zoneBadge}
             <span>${friche.site_type || 'Type inconnu'}</span>
             <span>${friche.comm_nom || ''}</span>
-            ${zoneBadge}
-            ${statusBadge}
           </div>
         `;
         container.appendChild(item);
 
-        // Créer le marqueur
-        const markerColor = friche.score >= 70 ? 'red' : friche.score >= 40 ? 'orange' : 'gray';
-        const markerSize = friche.score >= 70 ? 12 : friche.score >= 40 ? 10 : 8;
-        
-        let markerHtml = `<div style="
-          width: ${markerSize}px;
-          height: ${markerSize}px;
-          background: ${markerColor};
-          border: 2px solid white;
-          border-radius: 50%;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        "></div>`;
+        // Créer le marqueur — couleur selon statut, gris si aucun
+        const statusColors = { a_visiter: '#3b82f6', teste: '#f59e0b', bando: '#10b981', urbex: '#8b5cf6', mort: '#dc2626' };
+        const mColor = siteStatus ? statusColors[siteStatus] : '#6b7280';
+        const mSize = siteStatus ? 18 : 12;
+        const mBorder = siteStatus ? 3 : 2;
 
-        // Marqueur spécial si statut
-        if (siteStatus === 'bando') {
-          markerHtml = `<div style="font-size: 20px;">🟢</div>`;
-        } else if (siteStatus === 'urbex') {
-          markerHtml = `<div style="font-size: 20px;">🟣</div>`;
-        } else if (siteStatus === 'a_visiter') {
-          markerHtml = `<div style="font-size: 20px;">🔵</div>`;
-        } else if (siteStatus === 'teste') {
-          markerHtml = `<div style="font-size: 16px;">⚫</div>`;
-        } else if (siteStatus === 'mort') {
-          markerHtml = `<div style="font-size: 16px;">💀</div>`;
-        }
+        const markerHtml = `<div style="
+          width: ${mSize}px;
+          height: ${mSize}px;
+          background: ${mColor};
+          border: ${mBorder}px solid rgba(255,255,255,0.9);
+          border-radius: 50%;
+          box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+        "></div>`;
 
         const marker = L.marker([friche.lat, friche.long], {
           icon: L.divIcon({
             className: 'custom-marker',
             html: markerHtml,
-            iconSize: [markerSize + 4, markerSize + 4],
-            iconAnchor: [(markerSize + 4)/2, (markerSize + 4)/2]
+            iconSize: [mSize + 4, mSize + 4],
+            iconAnchor: [(mSize + 4)/2, (mSize + 4)/2]
           })
         }).addTo(map);
 
@@ -1409,8 +1404,8 @@
       // Afficher le statut communautaire et le dernier user
       const statusInfoEl = document.getElementById('detail-status-info');
       if (currentStatus && lastUser) {
-        const statusEmoji = { a_visiter: '🔵', teste: '⚫', bando: '🟢', urbex: '🟣', mort: '💀' };
-        const statusLabel = { a_visiter: 'À visiter', teste: 'Testé', bando: 'Bando', urbex: 'Urbex', mort: 'Mort' };
+        const statusEmoji = { a_visiter: '🔵', teste: '🟠', bando: '🟢', urbex: '🟣', mort: '💀' };
+        const statusLabel = { a_visiter: 'À visiter', teste: 'Testé', bando: 'Bando', urbex: 'Urbex', mort: 'Raté' };
         statusInfoEl.innerHTML = `
           <span class="result-status status-${currentStatus}">${statusEmoji[currentStatus]} ${statusLabel[currentStatus]}</span>
           <span class="last-user">par <strong>${lastUser}</strong></span>
@@ -1419,6 +1414,37 @@
       } else {
         statusInfoEl.innerHTML = '<span style="color:#666">Aucun statut</span>';
         statusInfoEl.style.display = 'flex';
+      }
+
+      // Étoiles de note
+      const currentNote = siteData?.note || 0;
+      const starsEl = document.getElementById('detail-stars');
+      const noteInfoEl = document.getElementById('detail-note-info');
+      starsEl.innerHTML = '';
+      for (let i = 1; i <= 5; i++) {
+        const star = document.createElement('span');
+        star.className = 'star' + (i <= currentNote ? ' active' : '');
+        star.textContent = '★';
+        star.onclick = () => setNote(i);
+        star.onmouseenter = () => {
+          starsEl.querySelectorAll('.star').forEach((s, idx) => {
+            s.classList.toggle('hovered', idx < i);
+            s.classList.toggle('active', idx < i);
+          });
+        };
+        star.onmouseleave = () => {
+          const n = allStatuts[selectedFriche.site_id]?.note || 0;
+          starsEl.querySelectorAll('.star').forEach((s, idx) => {
+            s.classList.remove('hovered');
+            s.classList.toggle('active', idx < n);
+          });
+        };
+        starsEl.appendChild(star);
+      }
+      if (currentNote && lastUser) {
+        noteInfoEl.innerHTML = `${currentNote}/5 par <strong>${lastUser}</strong>`;
+      } else {
+        noteInfoEl.innerHTML = '';
       }
 
       // Liens externes
@@ -1564,6 +1590,59 @@
 
       } catch (error) {
         console.error('Erreur sauvegarde commentaire:', error);
+        alert('Erreur lors de la sauvegarde');
+      }
+    }
+
+    async function setNote(note) {
+      const username = document.getElementById('username').value;
+      if (!username) {
+        alert('Entre ton pseudo d\'abord');
+        return;
+      }
+      if (!selectedFriche) return;
+
+      try {
+        await fetch(`${SUPABASE_URL}/rest/v1/statuts`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'resolution=merge-duplicates'
+          },
+          body: JSON.stringify({
+            site_id: selectedFriche.site_id,
+            note: note,
+            last_user: username
+          })
+        });
+
+        // Mettre à jour localement
+        if (allStatuts[selectedFriche.site_id]) {
+          allStatuts[selectedFriche.site_id].note = note;
+          allStatuts[selectedFriche.site_id].last_user = username;
+        } else {
+          allStatuts[selectedFriche.site_id] = {
+            statut: null,
+            last_user: username,
+            commentaire: '',
+            note: note
+          };
+        }
+
+        // Mettre à jour les étoiles
+        document.querySelectorAll('#detail-stars .star').forEach((s, idx) => {
+          s.classList.toggle('active', idx < note);
+        });
+        document.getElementById('detail-note-info').innerHTML = `${note}/5 par <strong>${username}</strong>`;
+
+        // Mettre à jour la liste
+        applyFiltersAndDisplay();
+        showToast('Note enregistrée');
+
+      } catch (error) {
+        console.error('Erreur sauvegarde note:', error);
         alert('Erreur lors de la sauvegarde');
       }
     }
