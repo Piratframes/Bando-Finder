@@ -643,6 +643,104 @@
       background: rgba(245, 166, 35, 0.3);
       color: #fff;
     }
+
+    /* ========== MOBILE ========== */
+    @media (max-width: 768px) {
+      /* Header compact */
+      header {
+        padding: 8px 12px;
+        gap: 8px;
+      }
+      .logo {
+        font-size: 1.1rem;
+        width: 100%;
+        margin-bottom: 4px;
+      }
+      .controls {
+        gap: 6px;
+        width: 100%;
+      }
+      .control-group {
+        gap: 4px;
+      }
+      #username { width: 80px; }
+      #city-input { width: 100px !important; }
+      #dist-min, #dist-max { width: 45px !important; }
+      .filters-toggle { display: none; }
+
+      /* Masquer carte, sidebar pleine largeur */
+      main {
+        flex-direction: column;
+      }
+      #map {
+        display: none;
+      }
+      #sidebar {
+        width: 100%;
+        flex: 1;
+        border-left: none;
+      }
+
+      /* Fiche détail en overlay plein écran */
+      #detail-panel {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        z-index: 2000;
+        border: none;
+        border-radius: 0;
+      }
+      #detail-panel.visible {
+        display: flex;
+      }
+      .detail-close {
+        font-size: 2rem;
+        top: 12px;
+        right: 12px;
+        z-index: 10;
+      }
+      .detail-header {
+        padding: 12px;
+        padding-right: 40px;
+      }
+      .detail-header h3 {
+        font-size: 1rem;
+      }
+      .external-links {
+        flex-wrap: wrap;
+      }
+      .external-links a {
+        font-size: 0.75rem;
+        padding: 6px;
+      }
+      .detail-content {
+        padding: 12px;
+      }
+      .detail-actions {
+        padding: 12px;
+      }
+      .status-buttons {
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .status-buttons button {
+        font-size: 0.75rem;
+        padding: 6px;
+      }
+
+      /* Filtres panel */
+      #filters-panel {
+        display: none !important;
+      }
+
+      /* Résultats */
+      .result-item {
+        padding: 10px 12px;
+      }
+    }
   </style>
 </head>
 <body>
