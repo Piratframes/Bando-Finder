@@ -247,6 +247,7 @@
     .status-bando { background: #10b981; color: white; }
     .status-urbex { background: #8b5cf6; color: white; }
     .status-mort { background: #dc2626; color: white; }
+    .status-skipped { background: #eab308; color: #1c1c1e; }
 
     .last-user {
       font-size: 0.8rem;
@@ -430,7 +431,11 @@
     .btn-mort { background: #dc2626; }
     .btn-mort:hover { background: #ef4444; }
     .btn-mort.active { box-shadow: 0 0 0 2px #f5a623; }
-    
+
+    .btn-skipped { background: #eab308; color: #1c1c1e; }
+    .btn-skipped:hover { background: #facc15; }
+    .btn-skipped.active { box-shadow: 0 0 0 2px #f5a623; }
+
     .btn-clear { background: #3a3a3c; color: #e5e5ea; }
     
     .external-links {
@@ -771,6 +776,41 @@
       z-index: 1001;
     }
 
+    /* Toggle switch */
+    .toggle-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: #98989d;
+    }
+    .toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      background: #3a3a3c;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .toggle-switch.active {
+      background: #f5a623;
+    }
+    .toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-radius: 50%;
+      transition: transform 0.2s;
+    }
+    .toggle-switch.active::after {
+      transform: translateX(16px);
+    }
+
     /* Login screen */
     #login-screen {
       position: fixed;
@@ -989,12 +1029,17 @@
             <div class="multi-select-option" data-value="bando"><span class="ms-check"></span><span class="ms-label">🟢 Bandos</span></div>
             <div class="multi-select-option" data-value="urbex"><span class="ms-check"></span><span class="ms-label">🟣 Urbex</span></div>
             <div class="multi-select-option" data-value="mort"><span class="ms-check"></span><span class="ms-label">💀 Ratés</span></div>
+            <div class="multi-select-option" data-value="skipped"><span class="ms-check"></span><span class="ms-label">⏭️ Skipped</span></div>
             <div class="multi-select-option" data-value="any"><span class="ms-check"></span><span class="ms-label">📌 Avec un statut</span></div>
             <div class="multi-select-option" data-value="none"><span class="ms-check"></span><span class="ms-label">⭕ Sans statut</span></div>
           </div>
         </div>
       </div>
       <button class="btn-secondary filters-toggle" id="filters-toggle">⚙️ Plus de filtres</button>
+      <div class="toggle-group">
+        <span>Masquer ratés</span>
+        <div class="toggle-switch active" id="toggle-hide-rates"></div>
+      </div>
     </div>
   </header>
 
@@ -1140,6 +1185,7 @@
           <button class="btn-bando" onclick="setStatus('bando')">Bando!</button>
           <button class="btn-urbex" onclick="setStatus('urbex')">Urbex</button>
           <button class="btn-mort" onclick="setStatus('mort')">Raté</button>
+          <button class="btn-skipped" onclick="setStatus('skipped')">⏭️</button>
           <button class="btn-clear" onclick="setStatus(null)">✕</button>
         </div>
         <div class="comment-section">
@@ -1241,7 +1287,7 @@
         attribution: '© Esri'
       });
       
-      osm.addTo(map);
+      satellite.addTo(map);
       L.control.layers({'Carte': osm, 'Satellite': satellite}).addTo(map);
     }
 
@@ -1380,6 +1426,19 @@
 
       // Init multi-selects
       initMultiSelects();
+
+      // Toggle masquer ratés
+      const toggleHideRates = document.getElementById('toggle-hide-rates');
+      // Charger l'état sauvegardé (actif par défaut)
+      const hideRatesSaved = localStorage.getItem('bando_hide_rates');
+      if (hideRatesSaved === 'false') {
+        toggleHideRates.classList.remove('active');
+      }
+      toggleHideRates.addEventListener('click', () => {
+        toggleHideRates.classList.toggle('active');
+        localStorage.setItem('bando_hide_rates', toggleHideRates.classList.contains('active'));
+        applyFiltersAndDisplay();
+      });
 
       // Sauvegarde pseudo
       document.getElementById('username').addEventListener('change', (e) => {
@@ -1595,8 +1654,14 @@
       const statutFricheFilters = getMultiSelectValues('ms-filter-statut-friche');
       const zoneFilters = getMultiSelectValues('ms-filter-zone');
       const urbaFilters = getMultiSelectValues('ms-filter-urba');
+      const hideRates = document.getElementById('toggle-hide-rates')?.classList.contains('active');
 
       let results = [...filteredFriches];
+
+      // Masquer les ratés si toggle actif
+      if (hideRates) {
+        results = results.filter(f => allStatuts[f.site_id]?.statut !== 'mort');
+      }
 
       // Filtre statut global (multi)
       if (statusFilters.length > 0) {
@@ -1709,8 +1774,8 @@
 
         let statusBadge = '';
         if (siteStatus) {
-          const statusEmoji = { a_visiter: '🔵', teste: '🟠', bando: '🟢', urbex: '🟣', mort: '💀' };
-          const statusLabel = { a_visiter: 'À visiter', teste: 'Testé', bando: 'Bando', urbex: 'Urbex', mort: 'Raté' };
+          const statusEmoji = { a_visiter: '🔵', teste: '🟠', bando: '🟢', urbex: '🟣', mort: '💀', skipped: '⏭️' };
+          const statusLabel = { a_visiter: 'À visiter', teste: 'Testé', bando: 'Bando', urbex: 'Urbex', mort: 'Raté', skipped: 'Skipped' };
           statusBadge = `<span class="result-status status-${siteStatus}">${statusEmoji[siteStatus]} ${statusLabel[siteStatus] || siteStatus}</span>`;
           if (lastUser) {
             statusBadge += `<span class="last-user">par <strong>${lastUser}</strong></span>`;
@@ -1726,7 +1791,7 @@
 
         item.innerHTML = `
           <div class="result-header">
-            <a href="${mapsUrl}" target="_blank" class="btn-maps" onclick="event.stopPropagation()"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1c1c1e"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg></a>
+            <a href="${mapsUrl}" target="_blank" class="btn-maps" onclick="event.stopPropagation(); highlightItem('${friche.site_id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1c1c1e"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg></a>
             <span class="result-name">${friche.site_nom || 'Sans nom'}</span>
             <span class="result-distance">${friche.distance.toFixed(1)} km</span>
           </div>
@@ -1741,7 +1806,7 @@
         container.appendChild(item);
 
         // Créer le marqueur — couleur selon statut, gris si aucun
-        const statusColors = { a_visiter: '#3b82f6', teste: '#f59e0b', bando: '#10b981', urbex: '#8b5cf6', mort: '#dc2626' };
+        const statusColors = { a_visiter: '#3b82f6', teste: '#f59e0b', bando: '#10b981', urbex: '#8b5cf6', mort: '#dc2626', skipped: '#eab308' };
         const mColor = siteStatus ? statusColors[siteStatus] : '#6b7280';
         const mSize = siteStatus ? 18 : 12;
         const mBorder = siteStatus ? 3 : 2;
@@ -1834,8 +1899,8 @@
       // Afficher le statut communautaire et le dernier user
       const statusInfoEl = document.getElementById('detail-status-info');
       if (currentStatus && lastUser) {
-        const statusEmoji = { a_visiter: '🔵', teste: '🟠', bando: '🟢', urbex: '🟣', mort: '💀' };
-        const statusLabel = { a_visiter: 'À visiter', teste: 'Testé', bando: 'Bando', urbex: 'Urbex', mort: 'Raté' };
+        const statusEmoji = { a_visiter: '🔵', teste: '🟠', bando: '🟢', urbex: '🟣', mort: '💀', skipped: '⏭️' };
+        const statusLabel = { a_visiter: 'À visiter', teste: 'Testé', bando: 'Bando', urbex: 'Urbex', mort: 'Raté', skipped: 'Skipped' };
         statusInfoEl.innerHTML = `
           <span class="result-status status-${currentStatus}">${statusEmoji[currentStatus]} ${statusLabel[currentStatus]}</span>
           <span class="last-user">par <strong>${lastUser}</strong></span>
@@ -1913,6 +1978,14 @@
       if (friche) {
         selectedFriche = friche;
       }
+    }
+
+    function highlightItem(siteId) {
+      document.querySelectorAll('.result-item.selected').forEach(el => {
+        el.classList.remove('selected');
+      });
+      const item = document.querySelector(`.result-item[data-site-id="${siteId}"]`);
+      if (item) item.classList.add('selected');
     }
 
     function showToast(msg) {
