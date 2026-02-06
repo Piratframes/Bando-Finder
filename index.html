@@ -401,15 +401,16 @@
     }
     
     .status-buttons {
-      display: flex;
-      gap: 8px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
     }
-    
+
     .status-buttons button {
-      flex: 1;
-      font-size: 0.8rem;
-      padding: 8px;
+      font-size: 0.75rem;
+      padding: 10px 6px;
       color: #fff;
+      border-radius: 6px;
     }
 
     .btn-a_visiter { background: #3b82f6; }
@@ -959,12 +960,12 @@
         padding: 12px;
       }
       .status-buttons {
-        flex-wrap: wrap;
-        gap: 6px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
       }
       .status-buttons button {
-        font-size: 0.75rem;
-        padding: 6px;
+        font-size: 0.7rem;
+        padding: 8px 4px;
       }
 
       /* Filtres panel */
@@ -1168,25 +1169,26 @@
         <div id="detail-danger" style="display:none"></div>
       </div>
       <div class="detail-actions">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:5px;">
-          <div class="detail-section" style="margin-bottom:0;">
-            <h4>Statut communautaire</h4>
-            <div id="detail-status-info" style="display:flex; align-items:center; gap:8px; font-size:0.85rem; flex-wrap:wrap;"></div>
+        <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:0.75rem; color:#98989d;">Statut:</span>
+            <div id="detail-status-info" style="display:flex; align-items:center; gap:6px; font-size:0.8rem;"></div>
           </div>
-          <div class="detail-section" style="margin-bottom:0;">
-            <h4>Note</h4>
+          <div style="display:flex; align-items:center; gap:6px;">
+            <span style="font-size:0.75rem; color:#98989d;">Note:</span>
             <div class="star-rating" id="detail-stars"></div>
-            <div id="detail-note-info" class="last-user" style="margin-top:4px;"></div>
+            <span id="detail-note-info" style="font-size:0.7rem; color:#98989d;"></span>
           </div>
         </div>
         <div class="status-buttons">
-          <button class="btn-a_visiter" onclick="setStatus('a_visiter')">À visiter</button>
-          <button class="btn-teste" onclick="setStatus('teste')">Testé</button>
-          <button class="btn-bando" onclick="setStatus('bando')">Bando!</button>
-          <button class="btn-urbex" onclick="setStatus('urbex')">Urbex</button>
-          <button class="btn-mort" onclick="setStatus('mort')">Raté</button>
-          <button class="btn-skipped" onclick="setStatus('skipped')">⏭️</button>
-          <button class="btn-clear" onclick="setStatus(null)">✕</button>
+          <button class="btn-skipped" onclick="setStatus('skipped')">⏭️ Skipped</button>
+          <button class="btn-a_visiter" onclick="setStatus('a_visiter')">🔵 À visiter</button>
+          <button class="btn-teste" onclick="setStatus('teste')">🟠 Testé</button>
+          <button class="btn-bando" onclick="setStatus('bando')">🟢 Bando!</button>
+          <button class="btn-urbex" onclick="setStatus('urbex')">🟣 Urbex</button>
+          <button class="btn-mort" onclick="setStatus('mort')">💀 Raté</button>
+          <button class="btn-clear" onclick="setStatus(null)">✕ Reset</button>
+          <div></div>
         </div>
         <div class="comment-section">
           <textarea id="detail-comment" placeholder="Ajouter un commentaire..." rows="2"></textarea>
