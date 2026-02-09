@@ -280,6 +280,91 @@
       transform: translateX(-50%) translateY(0);
     }
 
+    /* Modal ajout spot */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.7);
+      z-index: 2000;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.visible {
+      display: flex;
+    }
+    .modal {
+      background: #2c2c2e;
+      border-radius: 12px;
+      padding: 24px;
+      width: 90%;
+      max-width: 400px;
+      border: 1px solid #3a3a3c;
+    }
+    .modal h3 {
+      margin-bottom: 20px;
+      color: #4ade80;
+    }
+    .modal-field {
+      margin-bottom: 16px;
+    }
+    .modal-field label {
+      display: block;
+      font-size: 0.85rem;
+      color: #98989d;
+      margin-bottom: 6px;
+    }
+    .modal-field input {
+      width: 100%;
+      padding: 10px 12px;
+    }
+    .modal-hint {
+      font-size: 0.75rem;
+      color: #636366;
+      margin-top: 4px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    .modal-actions button {
+      flex: 1;
+    }
+    .btn-green {
+      background: #4ade80;
+      color: #1c1c1e;
+    }
+    .btn-green:hover {
+      background: #22c55e;
+    }
+
+    /* Custom spot badge */
+    .custom-badge {
+      background: #4ade80;
+      color: #1c1c1e;
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 600;
+      margin-left: 6px;
+    }
+    .result-item.custom-spot {
+      border-left: 3px solid #4ade80;
+    }
+
+    /* Bouton supprimer */
+    .btn-delete {
+      background: #dc2626;
+      color: #fff;
+    }
+    .btn-delete:hover {
+      background: #ef4444;
+    }
+
     .danger-alert {
       background: rgba(220, 38, 38, 0.12);
       border: 1px solid rgba(220, 38, 38, 0.4);
@@ -762,6 +847,10 @@
     .multi-select-option .ms-label {
       flex: 1;
     }
+    .multi-select-separator {
+      border-top: 1px solid #3a3a3c;
+      margin: 6px 0;
+    }
     /* Scrollbar dropdown */
     .multi-select-dropdown::-webkit-scrollbar { width: 5px; }
     .multi-select-dropdown::-webkit-scrollbar-track { background: transparent; }
@@ -1031,6 +1120,9 @@
             <div class="multi-select-option" data-value="urbex"><span class="ms-check"></span><span class="ms-label">🟣 Urbex</span></div>
             <div class="multi-select-option" data-value="mort"><span class="ms-check"></span><span class="ms-label">💀 Ratés</span></div>
             <div class="multi-select-option" data-value="skipped"><span class="ms-check"></span><span class="ms-label">⏭️ Skipped</span></div>
+            <div class="multi-select-separator"></div>
+            <div class="multi-select-option" data-value="custom"><span class="ms-check"></span><span class="ms-label">📍 Spots custom</span></div>
+            <div class="multi-select-separator"></div>
             <div class="multi-select-option" data-value="any"><span class="ms-check"></span><span class="ms-label">📌 Avec un statut</span></div>
             <div class="multi-select-option" data-value="none"><span class="ms-check"></span><span class="ms-label">⭕ Sans statut</span></div>
           </div>
@@ -1094,10 +1186,6 @@
             <div class="multi-select-option" data-value="5000-"><span class="ms-check"></span><span class="ms-label">&gt; 5 000 m²</span></div>
           </div>
         </div>
-      </div>
-      <div class="filter-group">
-        <label>Nb bâtiments min</label>
-        <input type="number" id="filter-nb-bati" value="" placeholder="Ex: 2" />
       </div>
       <div class="filter-group">
         <label>Statut friche</label>
@@ -1200,10 +1288,31 @@
       <div class="sidebar-header">
         <h2>Résultats</h2>
         <span class="result-count" id="result-count">-</span>
+        <button onclick="openAddSpotModal()" class="btn-green" style="padding:6px 12px; font-size:0.8rem;">➕ Ajouter</button>
       </div>
       <div id="results"></div>
     </div>
   </main>
+
+  <!-- Modal ajout spot -->
+  <div class="modal-overlay" id="add-spot-modal">
+    <div class="modal">
+      <h3>➕ Ajouter un spot</h3>
+      <div class="modal-field">
+        <label>Nom du spot</label>
+        <input type="text" id="spot-name" placeholder="Ex: Usine abandonnée">
+      </div>
+      <div class="modal-field">
+        <label>Coordonnées GPS</label>
+        <input type="text" id="spot-coords" placeholder="48.8584, 2.2945">
+        <div class="modal-hint">💡 Copie les coordonnées depuis Google Maps</div>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" onclick="closeAddSpotModal()">Annuler</button>
+        <button class="btn-green" onclick="saveCustomSpot()">Ajouter</button>
+      </div>
+    </div>
+  </div>
 
   <div class="toast" id="toast"></div>
 
@@ -1219,6 +1328,7 @@
     let map = null;
     let markers = [];
     let allFriches = [];
+    let customSpots = [];
     let filteredFriches = [];
     let allStatuts = {}; // { site_id: { statut, last_user, commentaire } }
     let selectedFriche = null;
@@ -1263,6 +1373,9 @@
 
         // Charger les statuts depuis Supabase
         await loadStatuts();
+
+        // Charger les spots custom depuis Supabase
+        await loadCustomSpots();
 
         // Event listeners
         setupEventListeners();
@@ -1339,6 +1452,164 @@
         console.log(`${data.length} statuts chargés`);
       } catch (error) {
         console.error('Erreur chargement statuts:', error);
+      }
+    }
+
+    async function loadCustomSpots() {
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/custom_sites?select=*`, {
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+        const data = await response.json();
+
+        // Convertir en format compatible avec les friches
+        customSpots = data.map(s => ({
+          site_id: `custom_${s.id}`,
+          site_nom: s.site_nom,
+          lat: s.lat,
+          long: s.long,
+          isCustom: true,
+          custom_id: s.id,
+          created_by: s.created_by,
+          created_at: s.created_at,
+          // Valeurs par défaut pour compatibilité
+          comm_nom: 'Spot custom',
+          dep: '??',
+          score: null,
+          site_type: 'Custom',
+          site_surface: null,
+          urba_zone_type: null
+        }));
+
+        console.log(`${customSpots.length} spots custom chargés`);
+      } catch (error) {
+        console.error('Erreur chargement custom spots:', error);
+      }
+    }
+
+    // ========== MODAL AJOUT SPOT ==========
+    function openAddSpotModal() {
+      document.getElementById('add-spot-modal').classList.add('visible');
+      document.getElementById('spot-name').value = '';
+      document.getElementById('spot-coords').value = '';
+      document.getElementById('spot-name').focus();
+    }
+
+    function closeAddSpotModal() {
+      document.getElementById('add-spot-modal').classList.remove('visible');
+    }
+
+    function parseCoords(input) {
+      // Format attendu: "48.8584, 2.2945" ou "48.8584 2.2945"
+      const cleaned = input.trim().replace(/\s+/g, ' ').replace(',', ' ');
+      const parts = cleaned.split(' ').filter(p => p);
+      if (parts.length >= 2) {
+        const lat = parseFloat(parts[0]);
+        const lng = parseFloat(parts[1]);
+        if (!isNaN(lat) && !isNaN(lng) && lat >= -90 && lat <= 90 && lng >= -180 && lng <= 180) {
+          return { lat, lng };
+        }
+      }
+      return null;
+    }
+
+    async function saveCustomSpot() {
+      const name = document.getElementById('spot-name').value.trim();
+      const coordsInput = document.getElementById('spot-coords').value.trim();
+
+      if (!name) {
+        showToast('❌ Entre un nom pour le spot');
+        return;
+      }
+
+      const coords = parseCoords(coordsInput);
+      if (!coords) {
+        showToast('❌ Coordonnées invalides. Format: 48.8584, 2.2945');
+        return;
+      }
+
+      const username = document.getElementById('username').value.trim() || 'Anonyme';
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/custom_sites`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json',
+            'Prefer': 'return=representation'
+          },
+          body: JSON.stringify({
+            site_nom: name,
+            lat: coords.lat,
+            long: coords.lng,
+            created_by: username
+          })
+        });
+
+        if (!response.ok) throw new Error('Erreur lors de la sauvegarde');
+
+        const [newSpot] = await response.json();
+
+        // Ajouter aux custom spots locaux
+        customSpots.push({
+          site_id: `custom_${newSpot.id}`,
+          site_nom: newSpot.site_nom,
+          lat: newSpot.lat,
+          long: newSpot.long,
+          isCustom: true,
+          custom_id: newSpot.id,
+          created_by: newSpot.created_by,
+          created_at: newSpot.created_at,
+          comm_nom: 'Spot custom',
+          dep: '??',
+          score: null,
+          site_type: 'Custom',
+          site_surface: null,
+          urba_zone_type: null
+        });
+
+        closeAddSpotModal();
+        showToast(`✅ Spot "${name}" ajouté !`);
+
+        // Rafraîchir l'affichage
+        applyFiltersAndDisplay();
+
+      } catch (error) {
+        console.error('Erreur sauvegarde spot:', error);
+        showToast('❌ Erreur lors de la sauvegarde');
+      }
+    }
+
+    async function deleteCustomSpot(customId) {
+      if (!confirm('Supprimer ce spot custom ?')) return;
+
+      try {
+        const response = await fetch(`${SUPABASE_URL}/rest/v1/custom_sites?id=eq.${customId}`, {
+          method: 'DELETE',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`
+          }
+        });
+
+        if (!response.ok) throw new Error('Erreur lors de la suppression');
+
+        // Retirer des custom spots locaux
+        customSpots = customSpots.filter(s => s.custom_id !== customId);
+
+        closeDetail();
+        showToast('✅ Spot supprimé');
+
+        // Rafraîchir l'affichage
+        applyFiltersAndDisplay();
+
+      } catch (error) {
+        console.error('Erreur suppression spot:', error);
+        showToast('❌ Erreur lors de la suppression');
       }
     }
 
@@ -1422,9 +1693,6 @@
       });
       document.getElementById('search-btn').addEventListener('click', search);
       document.getElementById('filters-toggle').addEventListener('click', toggleFilters);
-
-      // Nb bâtiments (reste un input classique)
-      document.getElementById('filter-nb-bati').addEventListener('change', applyFiltersAndDisplay);
 
       // Init multi-selects
       initMultiSelects();
@@ -1636,11 +1904,12 @@
       const distMin = parseInt(document.getElementById('dist-min').value) || 0;
       const distMax = parseInt(document.getElementById('dist-max').value) || 50;
 
-      // Filtrer par distance et calculer score
-      filteredFriches = allFriches
+      // Filtrer par distance et calculer score (friches + custom spots)
+      const allSites = [...allFriches, ...customSpots];
+      filteredFriches = allSites
         .map(f => {
           const dist = calculateDistance(userPosition.lat, userPosition.lng, f.lat, f.long);
-          return { ...f, distance: dist, score: calculateScore(f) };
+          return { ...f, distance: dist, score: f.isCustom ? 0 : calculateScore(f) };
         })
         .filter(f => f.distance >= distMin && f.distance <= distMax);
 
@@ -1652,7 +1921,6 @@
       const typeFilters = getMultiSelectValues('ms-filter-type');
       const surfaceRanges = getMultiSelectValues('ms-filter-surface');
       const batiRanges = getMultiSelectValues('ms-filter-bati');
-      const nbBatiMin = parseInt(document.getElementById('filter-nb-bati').value) || 0;
       const statutFricheFilters = getMultiSelectValues('ms-filter-statut-friche');
       const zoneFilters = getMultiSelectValues('ms-filter-zone');
       const urbaFilters = getMultiSelectValues('ms-filter-urba');
@@ -1669,11 +1937,13 @@
       if (statusFilters.length > 0) {
         results = results.filter(f => {
           const siteStatut = allStatuts[f.site_id]?.statut;
+          // Gérer la valeur spéciale "custom" (spots ajoutés manuellement)
+          if (statusFilters.includes('custom') && f.isCustom) return true;
           // Gérer les valeurs spéciales "any" et "none"
           if (statusFilters.includes('any') && siteStatut) return true;
-          if (statusFilters.includes('none') && !siteStatut) return true;
+          if (statusFilters.includes('none') && !siteStatut && !f.isCustom) return true;
           // Valeurs de statut classiques
-          const classicFilters = statusFilters.filter(v => v !== 'any' && v !== 'none');
+          const classicFilters = statusFilters.filter(v => !['any', 'none', 'custom'].includes(v));
           if (classicFilters.length > 0 && classicFilters.includes(siteStatut)) return true;
           return false;
         });
@@ -1708,10 +1978,6 @@
             return true;
           });
         });
-      }
-
-      if (nbBatiMin) {
-        results = results.filter(f => (f.bati_nombre || 0) >= nbBatiMin);
       }
 
       // Statut friche (multi)
@@ -1764,7 +2030,7 @@
 
         // Créer l'élément liste
         const item = document.createElement('div');
-        item.className = 'result-item';
+        item.className = 'result-item' + (friche.isCustom ? ' custom-spot' : '');
         item.dataset.siteId = friche.site_id;
         item.onclick = (e) => {
           if (!e.target.closest('.btn-maps')) {
@@ -1791,27 +2057,36 @@
         const siteNote = siteData?.note || 0;
         const noteBadge = siteNote ? `<span class="result-note">${'★'.repeat(siteNote)}${'☆'.repeat(5 - siteNote)}</span>` : '';
 
+        const customBadge = friche.isCustom ? '<span class="custom-badge">CUSTOM</span>' : '';
+
         item.innerHTML = `
           <div class="result-header">
             <a href="${mapsUrl}" target="_blank" class="btn-maps" onclick="event.stopPropagation(); highlightItem('${friche.site_id}')"><svg width="14" height="14" viewBox="0 0 24 24" fill="#1c1c1e"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5S10.62 6.5 12 6.5s2.5 1.12 2.5 2.5S13.38 11.5 12 11.5z"/></svg></a>
-            <span class="result-name">${friche.site_nom || 'Sans nom'}</span>
+            <span class="result-name">${friche.site_nom || 'Sans nom'}${customBadge}</span>
             <span class="result-distance">${friche.distance.toFixed(1)} km</span>
           </div>
           <div class="result-meta">
             ${statusBadge}
             ${noteBadge}
             ${zoneBadge}
-            <span>${friche.site_type || 'Type inconnu'}</span>
-            <span>${friche.comm_nom || ''}</span>
+            <span>${friche.isCustom ? 'Spot custom' : (friche.site_type || 'Type inconnu')}</span>
+            <span>${friche.isCustom ? (friche.created_by || '') : (friche.comm_nom || '')}</span>
           </div>
         `;
         container.appendChild(item);
 
-        // Créer le marqueur — couleur selon statut, gris si aucun
+        // Créer le marqueur — couleur selon statut, gris si aucun, vert si custom
         const statusColors = { a_visiter: '#3b82f6', teste: '#f59e0b', bando: '#10b981', urbex: '#8b5cf6', mort: '#dc2626', skipped: '#eab308' };
-        const mColor = siteStatus ? statusColors[siteStatus] : '#6b7280';
-        const mSize = siteStatus ? 18 : 12;
-        const mBorder = siteStatus ? 3 : 2;
+        let mColor = siteStatus ? statusColors[siteStatus] : '#6b7280';
+        let mSize = siteStatus ? 18 : 12;
+        let mBorder = siteStatus ? 3 : 2;
+
+        // Custom spots en vert avec forme carrée arrondie
+        if (friche.isCustom && !siteStatus) {
+          mColor = '#4ade80';
+          mSize = 16;
+          mBorder = 3;
+        }
 
         const markerHtml = `<div style="
           width: ${mSize}px;
@@ -1852,50 +2127,71 @@
         itemElement.classList.add('selected');
       }
 
-      document.getElementById('detail-name').textContent = friche.site_nom || 'Sans nom';
-      document.getElementById('detail-location').textContent = `${friche.comm_nom || ''} (${friche.dep}) - ${friche.distance?.toFixed(1) || '?'} km`;
+      const customBadgeHtml = friche.isCustom ? '<span class="custom-badge">CUSTOM</span>' : '';
+      document.getElementById('detail-name').innerHTML = `${friche.site_nom || 'Sans nom'}${customBadgeHtml}`;
 
-      // Caractéristiques
-      const zoneLabel = getZoneLabel(friche.urba_zone_type);
-      document.getElementById('detail-chars').innerHTML = `
-        <div class="detail-item"><span class="label">Type</span><span class="value">${friche.site_type || '-'}</span></div>
-        <div class="detail-item"><span class="label">Score</span><span class="value ${friche.score >= 70 ? 'score-high' : ''}">${friche.score}/100</span></div>
-        <div class="detail-item"><span class="label">Surface terrain</span><span class="value">${friche.site_surface ? Math.round(friche.site_surface).toLocaleString() + ' m²' : '-'}</span></div>
-        <div class="detail-item"><span class="label">Zone PLU</span><span class="value zone-tag zone-${(friche.urba_zone_type || '').charAt(0).toLowerCase()}">${zoneLabel}</span></div>
-        <div class="detail-item"><span class="label">Statut</span><span class="value">${friche.site_statut || '-'}</span></div>
-        <div class="detail-item"><span class="label">Zone activités</span><span class="value">${friche.zone_activites || '-'}</span></div>
-        <div class="detail-item"><span class="label">Activité</span><span class="value">${friche.activite_libelle?.substring(0, 50) || '-'}</span></div>
-        <div class="detail-item"><span class="label">Fin activité</span><span class="value">${friche.activite_fin_annee || '-'}</span></div>
-        <div class="detail-item"><span class="label">Reconversion</span><span class="value">${friche.site_reconv_annee || 'Non prévue'}</span></div>
-      `;
-
-      // Bâtiments
-      document.getElementById('detail-bati').innerHTML = `
-        <div class="detail-item"><span class="label">Nb bâtiments</span><span class="value">${friche.bati_nombre || '-'}</span></div>
-        <div class="detail-item"><span class="label">Emprise bâtie</span><span class="value">${friche.emprise_sol_bati ? Math.round(friche.emprise_sol_bati).toLocaleString() + ' m²' : '-'}</span></div>
-        <div class="detail-item"><span class="label">État</span><span class="value">${friche.bati_etat || '-'}</span></div>
-        <div class="detail-item"><span class="label">Occupation</span><span class="value">${friche.site_occupation || '-'}</span></div>
-      `;
-
-      // Alerte danger (affichée seulement si pollution réelle détectée)
-      const dangerEl = document.getElementById('detail-danger');
-      const dangers = [];
-      const solPollution = (friche.sol_pollution_existe || '').toLowerCase().trim();
-      const batiPollution = (friche.bati_pollution || '').toLowerCase().trim();
-      const solDanger = ['oui', 'pollution avérée', 'pollution supposée', 'pollution probable', 'pollution traitée'];
-      const batiDanger = ['amiante', 'plomb', 'autre', 'probable'];
-      if (solDanger.includes(solPollution)) {
-        dangers.push('Pollution sol : ' + friche.sol_pollution_existe);
-      }
-      if (batiDanger.includes(batiPollution)) {
-        dangers.push('Pollution bâti : ' + friche.bati_pollution);
-      }
-      if (dangers.length > 0) {
-        dangerEl.className = 'danger-alert';
-        dangerEl.innerHTML = `<h4>Danger</h4>${dangers.map(d => `<div class="danger-item">${d}</div>`).join('')}`;
-        dangerEl.style.display = 'block';
+      if (friche.isCustom) {
+        document.getElementById('detail-location').textContent = `Ajouté par ${friche.created_by || 'Anonyme'} - ${friche.distance?.toFixed(1) || '?'} km`;
       } else {
+        document.getElementById('detail-location').textContent = `${friche.comm_nom || ''} (${friche.dep}) - ${friche.distance?.toFixed(1) || '?'} km`;
+      }
+
+      // Caractéristiques (simplifiées pour les custom spots)
+      if (friche.isCustom) {
+        document.getElementById('detail-chars').innerHTML = `
+          <div class="detail-item"><span class="label">Type</span><span class="value">Spot custom</span></div>
+          <div class="detail-item"><span class="label">Latitude</span><span class="value">${friche.lat.toFixed(6)}</span></div>
+          <div class="detail-item"><span class="label">Longitude</span><span class="value">${friche.long.toFixed(6)}</span></div>
+        `;
+        document.getElementById('detail-bati').innerHTML = `
+          <div style="text-align:center; padding:10px;">
+            <button class="btn-delete" onclick="deleteCustomSpot('${friche.custom_id}')">🗑️ Supprimer ce spot</button>
+          </div>
+        `;
+      } else {
+        const zoneLabel = getZoneLabel(friche.urba_zone_type);
+        document.getElementById('detail-chars').innerHTML = `
+          <div class="detail-item"><span class="label">Type</span><span class="value">${friche.site_type || '-'}</span></div>
+          <div class="detail-item"><span class="label">Score</span><span class="value ${friche.score >= 70 ? 'score-high' : ''}">${friche.score}/100</span></div>
+          <div class="detail-item"><span class="label">Surface terrain</span><span class="value">${friche.site_surface ? Math.round(friche.site_surface).toLocaleString() + ' m²' : '-'}</span></div>
+          <div class="detail-item"><span class="label">Zone PLU</span><span class="value zone-tag zone-${(friche.urba_zone_type || '').charAt(0).toLowerCase()}">${zoneLabel}</span></div>
+          <div class="detail-item"><span class="label">Statut</span><span class="value">${friche.site_statut || '-'}</span></div>
+          <div class="detail-item"><span class="label">Zone activités</span><span class="value">${friche.zone_activites || '-'}</span></div>
+          <div class="detail-item"><span class="label">Activité</span><span class="value">${friche.activite_libelle?.substring(0, 50) || '-'}</span></div>
+          <div class="detail-item"><span class="label">Fin activité</span><span class="value">${friche.activite_fin_annee || '-'}</span></div>
+          <div class="detail-item"><span class="label">Reconversion</span><span class="value">${friche.site_reconv_annee || 'Non prévue'}</span></div>
+        `;
+        document.getElementById('detail-bati').innerHTML = `
+          <div class="detail-item"><span class="label">Nb bâtiments</span><span class="value">${friche.bati_nombre || '-'}</span></div>
+          <div class="detail-item"><span class="label">Emprise bâtie</span><span class="value">${friche.emprise_sol_bati ? Math.round(friche.emprise_sol_bati).toLocaleString() + ' m²' : '-'}</span></div>
+          <div class="detail-item"><span class="label">État</span><span class="value">${friche.bati_etat || '-'}</span></div>
+          <div class="detail-item"><span class="label">Occupation</span><span class="value">${friche.site_occupation || '-'}</span></div>
+        `;
+      }
+
+      // Alerte danger (affichée seulement si pollution réelle détectée, pas pour les custom)
+      const dangerEl = document.getElementById('detail-danger');
+      if (friche.isCustom) {
         dangerEl.style.display = 'none';
+      } else {
+        const dangers = [];
+        const solPollution = (friche.sol_pollution_existe || '').toLowerCase().trim();
+        const batiPollution = (friche.bati_pollution || '').toLowerCase().trim();
+        const solDanger = ['oui', 'pollution avérée', 'pollution supposée', 'pollution probable', 'pollution traitée'];
+        const batiDanger = ['amiante', 'plomb', 'autre', 'probable'];
+        if (solDanger.includes(solPollution)) {
+          dangers.push('Pollution sol : ' + friche.sol_pollution_existe);
+        }
+        if (batiDanger.includes(batiPollution)) {
+          dangers.push('Pollution bâti : ' + friche.bati_pollution);
+        }
+        if (dangers.length > 0) {
+          dangerEl.className = 'danger-alert';
+          dangerEl.innerHTML = `<h4>Danger</h4>${dangers.map(d => `<div class="danger-item">${d}</div>`).join('')}`;
+          dangerEl.style.display = 'block';
+        } else {
+          dangerEl.style.display = 'none';
+        }
       }
 
       // Afficher le statut communautaire et le dernier user
