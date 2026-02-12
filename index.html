@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bando Finder</title>
+  <title>Bando Hub</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -40,7 +40,23 @@
     .logo {
       font-size: 1.5rem;
       font-weight: 700;
-      color: #f5a623;
+      display: flex;
+      align-items: center;
+    }
+    .logo-bando {
+      color: #1c1c1e;
+      background: #f5a623;
+      padding: 2px 6px;
+      border-radius: 4px 0 0 4px;
+      border: 2px solid #f5a623;
+    }
+    .logo-hub {
+      color: #fff;
+      background: #1c1c1e;
+      padding: 2px 8px;
+      border-radius: 0 4px 4px 0;
+      border: 2px solid #f5a623;
+      border-left: none;
     }
     
     .controls {
@@ -926,8 +942,25 @@
     #login-screen .login-logo {
       font-size: 2rem;
       font-weight: 700;
-      color: #f5a623;
       margin-bottom: 8px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    #login-screen .logo-bando {
+      color: #1c1c1e;
+      background: #f5a623;
+      padding: 4px 10px;
+      border-radius: 6px 0 0 6px;
+      border: 3px solid #f5a623;
+    }
+    #login-screen .logo-hub {
+      color: #fff;
+      background: #1c1c1e;
+      padding: 4px 12px;
+      border-radius: 0 6px 6px 0;
+      border: 3px solid #f5a623;
+      border-left: none;
     }
     #login-screen .login-sub {
       font-size: 0.85rem;
@@ -979,8 +1012,10 @@
       }
       .logo {
         font-size: 1.1rem;
-        width: 100%;
         margin-bottom: 4px;
+      }
+      .logo-bando, .logo-hub {
+        padding: 2px 5px;
       }
       .controls {
         gap: 6px;
@@ -1072,7 +1107,7 @@
 <body>
   <div id="login-screen">
     <div class="login-box">
-      <div class="login-logo">🏚️ Bando Finder</div>
+      <div class="login-logo"><span class="logo-bando">Bando</span><span class="logo-hub">Hub</span></div>
       <div class="login-sub">Accès réservé aux pilotes</div>
       <input type="password" id="login-password" placeholder="Mot de passe..." autofocus />
       <button onclick="checkPassword()">Entrer</button>
@@ -1086,7 +1121,7 @@
   </div>
 
   <header>
-    <div class="logo"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="vertical-align: middle; margin-right: 6px;"><path d="M3 21V10L7 6L10 9V7L14 3L17 6V4L21 8V21H3Z" stroke="white" stroke-width="1.8" stroke-linejoin="round" fill="none"/><path d="M3 21H21" stroke="white" stroke-width="1.8"/><rect x="6" y="13" width="3" height="3" rx="0.5" stroke="white" stroke-width="1.2" fill="none"/><rect x="13" y="10" width="3" height="3" rx="0.5" stroke="white" stroke-width="1.2" fill="none"/><line x1="11" y1="14" x2="11" y2="21" stroke="white" stroke-width="1.2"/><rect x="15" y="16" width="2.5" height="5" rx="0.5" stroke="white" stroke-width="1.2" fill="none"/><line x1="8" y1="6" x2="9" y2="8" stroke="white" stroke-width="1" stroke-dasharray="1.5 1.5"/></svg> Bando Finder</div>
+    <div class="logo"><span class="logo-bando">Bando</span><span class="logo-hub">Hub</span></div>
     <div class="controls">
       <div class="control-group">
         <label>Pseudo</label>
