@@ -1362,6 +1362,7 @@
     let db = null;
     let map = null;
     let markers = [];
+    let markerMap = {}; // { site_id: marker }
     let allFriches = [];
     let customSpots = [];
     let filteredFriches = [];
@@ -2050,6 +2051,7 @@
       // Nettoyer les marqueurs
       markers.forEach(m => map.removeLayer(m));
       markers = [];
+      markerMap = {};
 
       // Mettre à jour le compteur
       document.getElementById('result-count').textContent = `${results.length} trouvés`;
@@ -2071,6 +2073,7 @@
           if (!e.target.closest('.btn-maps')) {
             selectFriche(friche, item);
             showDetail(friche);
+            highlightMarker(friche.site_id);
             map.flyTo([friche.lat, friche.long], 15, { duration: 0.8 });
           }
         };
@@ -2123,13 +2126,14 @@
           mBorder = 3;
         }
 
-        const markerHtml = `<div style="
+        const markerHtml = `<div class="marker-dot" style="
           width: ${mSize}px;
           height: ${mSize}px;
           background: ${mColor};
           border: ${mBorder}px solid rgba(255,255,255,0.9);
           border-radius: 50%;
           box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+          transition: all 0.2s;
         "></div>`;
 
         const marker = L.marker([friche.lat, friche.long], {
@@ -2141,8 +2145,13 @@
           })
         }).addTo(map);
 
-        marker.on('click', () => showDetail(friche));
+        marker.siteId = friche.site_id;
+        marker.on('click', () => {
+          showDetail(friche);
+          highlightMarker(friche.site_id);
+        });
         markers.push(marker);
+        markerMap[friche.site_id] = marker;
       });
     }
 
@@ -2153,14 +2162,16 @@
       const lastUser = siteData?.last_user || null;
       const comment = siteData?.commentaire || '';
 
-      // Sélectionner la ligne correspondante
+      // Sélectionner la ligne correspondante + highlight marqueur
       document.querySelectorAll('.result-item.selected').forEach(el => {
         el.classList.remove('selected');
       });
       const itemElement = document.querySelector(`.result-item[data-site-id="${friche.site_id}"]`);
       if (itemElement) {
         itemElement.classList.add('selected');
+        itemElement.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
+      highlightMarker(friche.site_id);
 
       const customBadgeHtml = friche.isCustom ? '<span class="custom-badge">CUSTOM</span>' : '';
       document.getElementById('detail-name').innerHTML = `${friche.site_nom || 'Sans nom'}${customBadgeHtml}`;
@@ -2319,6 +2330,26 @@
       });
       const item = document.querySelector(`.result-item[data-site-id="${siteId}"]`);
       if (item) item.classList.add('selected');
+    }
+
+    function highlightMarker(siteId) {
+      // Reset tous les marqueurs
+      markers.forEach(m => {
+        const dot = m.getElement()?.querySelector('.marker-dot');
+        if (dot) {
+          dot.style.boxShadow = '0 2px 6px rgba(0,0,0,0.4)';
+          dot.style.transform = '';
+        }
+      });
+      // Highlight le marqueur sélectionné
+      const marker = markerMap[siteId];
+      if (marker) {
+        const dot = marker.getElement()?.querySelector('.marker-dot');
+        if (dot) {
+          dot.style.boxShadow = '0 0 0 4px #f5a623, 0 0 15px rgba(245,166,35,0.6)';
+          dot.style.transform = 'scale(1.5)';
+        }
+      }
     }
 
     function showToast(msg) {
