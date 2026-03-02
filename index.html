@@ -1358,6 +1358,23 @@
     // Configuration Supabase
     const SUPABASE_URL = 'https://jrontpgwneagnlvvxzsz.supabase.co';
     const SUPABASE_KEY = 'sb_publishable_ib2IbfWs4rX9tag5FrwjRw_wh32xfMf';
+    const APP_SECRET = 'BandoHub_S3cret_2026!';
+
+    // Helper pour appeler les fonctions RPC
+    async function rpc(fnName, params = {}) {
+      const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/${fnName}`, {
+        method: 'POST',
+        headers: {
+          'apikey': SUPABASE_KEY,
+          'Authorization': `Bearer ${SUPABASE_KEY}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ secret: APP_SECRET, ...params })
+      });
+      if (!res.ok) throw new Error(`RPC ${fnName} failed: ${res.status}`);
+      const text = await res.text();
+      return text ? JSON.parse(text) : null;
+    }
 
     // État global
     let db = null;
@@ -1538,28 +1555,12 @@
 
         // Enregistrer 1 seule visite par jour par navigateur
         if (!localStorage.getItem(visitKey)) {
-          await fetch(`${SUPABASE_URL}/rest/v1/visits`, {
-            method: 'POST',
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': `Bearer ${SUPABASE_KEY}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username })
-          });
+          await rpc('insert_visit', { p_username: username });
           localStorage.setItem(visitKey, '1');
         }
 
         // Compter les visiteurs uniques (distinct username)
-        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/count_unique_visitors`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        const count = await res.json();
+        const count = await rpc('count_unique_visitors');
         document.getElementById('visit-count').textContent = `${count} visiteurs`;
       } catch (e) {
         console.error('Erreur tracking visite:', e);
@@ -1610,25 +1611,12 @@
       const username = document.getElementById('username').value.trim() || 'Anonyme';
 
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/custom_sites`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'return=representation'
-          },
-          body: JSON.stringify({
-            site_nom: name,
-            lat: coords.lat,
-            long: coords.lng,
-            created_by: username
-          })
+        const newSpot = await rpc('insert_custom_site', {
+          p_site_nom: name,
+          p_lat: coords.lat,
+          p_long: coords.lng,
+          p_created_by: username
         });
-
-        if (!response.ok) throw new Error('Erreur lors de la sauvegarde');
-
-        const [newSpot] = await response.json();
 
         // Ajouter aux custom spots locaux
         customSpots.push({
@@ -1664,15 +1652,7 @@
       if (!confirm('Supprimer ce spot custom ?')) return;
 
       try {
-        const response = await fetch(`${SUPABASE_URL}/rest/v1/custom_sites?id=eq.${customId}`, {
-          method: 'DELETE',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`
-          }
-        });
-
-        if (!response.ok) throw new Error('Erreur lors de la suppression');
+        await rpc('delete_custom_site', { p_id: customId });
 
         // Retirer des custom spots locaux
         customSpots = customSpots.filter(s => s.custom_id !== customId);
@@ -2409,31 +2389,13 @@
 
       try {
         if (status === null) {
-          // Supprimer le statut du site
-          await fetch(`${SUPABASE_URL}/rest/v1/statuts?site_id=eq.${selectedFriche.site_id}`, {
-            method: 'DELETE',
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': `Bearer ${SUPABASE_KEY}`
-            }
-          });
-
+          await rpc('delete_statut', { p_site_id: selectedFriche.site_id });
           delete allStatuts[selectedFriche.site_id];
         } else {
-          // Upsert par site_id uniquement — le dernier user qui change gagne
-          await fetch(`${SUPABASE_URL}/rest/v1/statuts`, {
-            method: 'POST',
-            headers: {
-              'apikey': SUPABASE_KEY,
-              'Authorization': `Bearer ${SUPABASE_KEY}`,
-              'Content-Type': 'application/json',
-              'Prefer': 'resolution=merge-duplicates'
-            },
-            body: JSON.stringify({
-              site_id: selectedFriche.site_id,
-              statut: status,
-              last_user: username
-            })
+          await rpc('upsert_statut', {
+            p_site_id: selectedFriche.site_id,
+            p_statut: status,
+            p_last_user: username
           });
 
           allStatuts[selectedFriche.site_id] = {
@@ -2465,20 +2427,11 @@
       const commentaire = document.getElementById('detail-comment').value.trim();
 
       try {
-        // Upsert par site_id avec commentaire + last_user
-        await fetch(`${SUPABASE_URL}/rest/v1/statuts`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates'
-          },
-          body: JSON.stringify({
-            site_id: selectedFriche.site_id,
-            commentaire: commentaire,
-            last_user: username
-          })
+        await rpc('upsert_statut', {
+          p_site_id: selectedFriche.site_id,
+          p_statut: allStatuts[selectedFriche.site_id]?.statut || null,
+          p_last_user: username,
+          p_commentaire: commentaire
         });
 
         // Mettre à jour localement
@@ -2510,19 +2463,11 @@
       if (!selectedFriche) return;
 
       try {
-        await fetch(`${SUPABASE_URL}/rest/v1/statuts`, {
-          method: 'POST',
-          headers: {
-            'apikey': SUPABASE_KEY,
-            'Authorization': `Bearer ${SUPABASE_KEY}`,
-            'Content-Type': 'application/json',
-            'Prefer': 'resolution=merge-duplicates'
-          },
-          body: JSON.stringify({
-            site_id: selectedFriche.site_id,
-            note: note,
-            last_user: username
-          })
+        await rpc('upsert_statut', {
+          p_site_id: selectedFriche.site_id,
+          p_statut: allStatuts[selectedFriche.site_id]?.statut || null,
+          p_last_user: username,
+          p_note: note
         });
 
         // Mettre à jour localement
