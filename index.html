@@ -1122,6 +1122,7 @@
 
   <header>
     <div class="logo"><span class="logo-bando">Bando</span><span class="logo-hub">Hub</span></div>
+    <span id="visit-count" style="font-size:0.7rem; color:#636366;"></span>
     <div class="controls">
       <div class="control-group">
         <label>Pseudo</label>
@@ -1419,6 +1420,9 @@
         // Masquer le loading
         document.getElementById('loading').classList.add('hidden');
 
+        // Tracker la visite (non bloquant)
+        trackVisit();
+
       } catch (error) {
         console.error('Erreur initialisation:', error);
         alert('Erreur lors du chargement: ' + error.message);
@@ -1523,6 +1527,42 @@
         console.log(`${customSpots.length} spots custom chargés`);
       } catch (error) {
         console.error('Erreur chargement custom spots:', error);
+      }
+    }
+
+    async function trackVisit() {
+      try {
+        const username = localStorage.getItem('bando_username') || 'Anonyme';
+        const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+        const visitKey = `bando_visit_${today}`;
+
+        // Enregistrer 1 seule visite par jour par navigateur
+        if (!localStorage.getItem(visitKey)) {
+          await fetch(`${SUPABASE_URL}/rest/v1/visits`, {
+            method: 'POST',
+            headers: {
+              'apikey': SUPABASE_KEY,
+              'Authorization': `Bearer ${SUPABASE_KEY}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ username })
+          });
+          localStorage.setItem(visitKey, '1');
+        }
+
+        // Compter les visiteurs uniques (distinct username)
+        const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/count_unique_visitors`, {
+          method: 'POST',
+          headers: {
+            'apikey': SUPABASE_KEY,
+            'Authorization': `Bearer ${SUPABASE_KEY}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        const count = await res.json();
+        document.getElementById('visit-count').textContent = `${count} visiteurs`;
+      } catch (e) {
+        console.error('Erreur tracking visite:', e);
       }
     }
 
